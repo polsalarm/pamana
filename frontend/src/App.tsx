@@ -1,16 +1,81 @@
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useWallet } from './contexts/WalletContext'
+import { Landing } from './pages/landing/Landing'
+import { Dashboard } from './pages/owner/Dashboard'
+import { CreateVault } from './pages/owner/CreateVault'
+import { Deposit } from './pages/owner/Deposit'
+import { Placeholder } from './pages/Placeholder'
+import type { ReactNode } from 'react'
+
+/** Gate owner routes behind a connected wallet. */
+function RequireWallet({ children }: { children: ReactNode }) {
+  const { address } = useWallet()
+  if (!address) return <Navigate to="/" replace />
+  return <>{children}</>
+}
+
 function App() {
   return (
-    <main className="min-h-dvh flex flex-col items-center justify-center gap-4 bg-neutral-950 text-neutral-100 px-6 text-center">
-      <div className="text-6xl">🪙</div>
-      <h1 className="text-4xl font-bold tracking-tight">Pamana</h1>
-      <p className="max-w-md text-neutral-400">
-        Trustless on-chain inheritance for Filipino families. When you go
-        silent, your family inherits — no company, no lawyer, no court.
-      </p>
-      <span className="mt-2 rounded-full border border-neutral-700 px-3 py-1 text-xs text-neutral-500">
-        Phase 0 · scaffold · Stellar Testnet
-      </span>
-    </main>
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route
+        path="/dashboard"
+        element={
+          <RequireWallet>
+            <Dashboard />
+          </RequireWallet>
+        }
+      />
+      <Route
+        path="/create"
+        element={
+          <RequireWallet>
+            <CreateVault />
+          </RequireWallet>
+        }
+      />
+      <Route
+        path="/deposit"
+        element={
+          <RequireWallet>
+            <Deposit />
+          </RequireWallet>
+        }
+      />
+      <Route
+        path="/heirs"
+        element={
+          <RequireWallet>
+            <Placeholder title="Manage Heirs" phase="Phase 6" />
+          </RequireWallet>
+        }
+      />
+      <Route
+        path="/withdraw"
+        element={
+          <RequireWallet>
+            <Placeholder title="Withdraw" phase="Phase 6" />
+          </RequireWallet>
+        }
+      />
+      <Route
+        path="/activity"
+        element={
+          <RequireWallet>
+            <Placeholder title="Activity" phase="a later phase" />
+          </RequireWallet>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <RequireWallet>
+            <Placeholder title="Settings" phase="a later phase" />
+          </RequireWallet>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
 

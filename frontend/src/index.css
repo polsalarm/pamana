@@ -1,1 +1,77 @@
 @import "tailwindcss";
+
+/* Pamana "Heritage Protocol" design system — from the Stitch project. */
+@theme {
+  --color-surface: #faf9f6;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f4f3f1;
+  --color-surface-container: #efeeeb;
+  --color-surface-container-high: #e9e8e5;
+  --color-surface-variant: #e3e2e0;
+  --color-surface-dim: #dbdad7;
+
+  --color-on-surface: #1a1c1a;
+  --color-on-surface-variant: #404944;
+  --color-outline: #707974;
+  --color-outline-variant: #bfc9c3;
+  --color-inverse-surface: #2f312f;
+
+  --color-primary: #003527;
+  --color-primary-container: #064e3b;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #80bea6;
+  --color-primary-fixed: #b0f0d6;
+  --color-primary-fixed-dim: #95d3ba;
+
+  --color-secondary: #855300;
+  --color-secondary-container: #fea619;
+  --color-on-secondary-container: #684000;
+  --color-amber: #f59e0b;
+
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --radius-2xl: 24px;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  user-select: none;
+}
+.material-symbols-outlined.fill {
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+/* Pulsing heartbeat glow on the status light. */
+.status-glow {
+  animation: pulse-glow 2s infinite;
+}
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(6, 78, 59, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(6, 78, 59, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(6, 78, 59, 0); }
+}
+/* Amber variant for the "inheritance unlocked" state. */
+.status-glow-amber {
+  animation: pulse-glow-amber 2s infinite;
+}
+@keyframes pulse-glow-amber {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.45); }
+  70% { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+.card-shadow {
+  box-shadow: 0 10px 30px rgba(6, 78, 59, 0.05);
+}
+
+::-webkit-scrollbar { display: none; }
+* { -ms-overflow-style: none; scrollbar-width: none; }
