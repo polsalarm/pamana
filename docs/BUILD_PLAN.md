@@ -17,6 +17,8 @@ Source of truth: `Pamana-Full-Document.docx` (§1–10). This plan operationaliz
 | 4 | PDAX on- & off-ramp | **Full flow, both directions** (production keys available): on-ramp PHP→USDC to fund a vault, off-ramp USDC→PHP for heirs. Layer-1 public rate pull stays as fallback |
 | 5 | NFC claim card | **Committed** (Android device confirmed): Web NFC API tap-to-claim; passkey login is the parallel path for non-Android |
 | 6 | Page role naming | Rename skeleton `admin/customer/vendor` → **owner / heir / landing** |
+| 7 | Platform | **Mobile-first, Android-tested, installable PWA** (NFC tap-to-claim needs Android Chrome) |
+| 8 | Owner wallet | **Stellar Wallets Kit** — Freighter (desktop) + LOBSTR/WalletConnect (Android) + xBull/Albedo in one integration; passkey smart-account added in Phase 7 |
 
 **Win condition (doc §8 cut line):** vault contract live on Testnet + PDAX rate pull + heir claims on stage. Everything else is enhancement or honest stub (RWA card, Sentinel light).
 
@@ -95,9 +97,10 @@ Contracts fully built + deployed before the frontend consumes them. Phases 1–4
 - **Success**: factory deploys a working vault via one call; two owners get two isolated vaults; contract IDs recorded; manual CLI end-to-end (create → deposit → check_in → claim) passes on Testnet.
 
 ### Phase 5 — Frontend foundation  (W2)
-- **Tasks**: Freighter connect; `stellar.ts` + `contract.ts` bindings; create-vault via factory; deposit UI; live status light (Alive/Unlocked) + countdown; check-in button.
-- **Files**: `lib/stellar.ts`, `lib/contract.ts`, `contexts/WalletContext.tsx`, `contexts/VaultContext.tsx`, `pages/owner/*`, `components/StatusLight.tsx`, `components/CountdownCard.tsx`.
-- **Success**: owner connects wallet, creates a vault, deposits USDC, sees balance + status; check-in updates on-chain heartbeat (verified in Stellar Expert).
+- **Platform**: mobile-first responsive, installable PWA (vite-plugin-pwa), Android-tested.
+- **Tasks**: **Stellar Wallets Kit** connect (Freighter desktop / LOBSTR+WalletConnect Android); `stellar.ts` (RPC + tx build/sign/submit) + `contract.ts` (factory + vault bindings); create-vault via factory; deposit UI; live status light (Alive/TimedOut/Distributing) + countdown; check-in button.
+- **Files**: `lib/stellar.ts`, `lib/wallet.ts` (Wallets Kit), `lib/contract.ts`, `contexts/WalletContext.tsx`, `contexts/VaultContext.tsx`, `pages/owner/*`, `components/StatusLight.tsx`, `components/CountdownCard.tsx`.
+- **Success**: owner connects wallet on Android, creates a vault, deposits, sees balance + status; check-in updates on-chain heartbeat (verified in Stellar Expert). Live contracts from Phase 4 (factory `CAMKUF…`).
 
 ### Phase 6 — Heir designation + claim flow  (W2)
 - **Tasks**: BPS split editor (live sum-to-10000 validation, reject bad split in UI); `set_heirs`; schedule editor; heir claim page.

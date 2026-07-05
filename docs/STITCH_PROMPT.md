@@ -1,6 +1,8 @@
 # Stitch Design Prompt — Pamana
 
-Paste the **App context** block first, then generate each screen with its own prompt. Mobile-first (heirs claim on phones); the same design scales to desktop web.
+Paste the **App context** block first, then generate each screen with its own prompt. **Mobile-first, Android-tested, installable PWA** (heirs claim on phones; NFC tap-to-claim is Android Chrome). The same design scales to desktop web.
+
+> Wallet note: on Android there is no Freighter extension — connect via a mobile wallet (LOBSTR/WalletConnect) or a passkey smart account (fingerprint/face). Design the "Connect Wallet" screen as a generic multi-wallet chooser, not Freighter-specific.
 
 ---
 
@@ -22,7 +24,7 @@ Paste the **App context** block first, then generate each screen with its own pr
 ## Screens
 
 ### 1. Landing / Connect Wallet
-Hero screen. App name **Pamana**, tagline "Your pamana moves on its own." One primary button **Connect Wallet** (Freighter). A short 3-step "how it works" strip (Create vault → Add heirs → Stay alive). Trust signals: "Enforced on-chain. No company holds your keys." Bottom: "Powered by Stellar."
+Hero screen. App name **Pamana**, tagline "Your pamana moves on its own." One primary button **Connect Wallet** that opens a multi-wallet chooser sheet (options: passkey / fingerprint, LOBSTR, Freighter, xBull) — not Freighter-specific. A short 3-step "how it works" strip (Create vault → Add heirs → Stay alive). Trust signals: "Enforced on-chain. No company holds your keys." Bottom: "Powered by Stellar."
 
 ### 2. Owner Dashboard (the home screen)
 The most important screen. Show:
