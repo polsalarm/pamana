@@ -7,7 +7,7 @@
 //! `timeout`, designated heirs claim their basis-point share directly — no
 //! company, court, or lawyer in the loop. See `Pamana-Full-Document.md` §4–6.
 
-mod types;
+pub mod types;
 #[cfg(test)]
 mod test;
 
