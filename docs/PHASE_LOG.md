@@ -10,7 +10,7 @@ Living record of what changed each phase: contract IDs, deploy links, keys (publ
 
 | Item | Value |
 |------|-------|
-| Current phase | ✅ Phases 0–4 done → ▶ Phase 5 next (frontend foundation) |
+| Current phase | ✅ Phases 0–5 done → ▶ Phase 6 next (heir designation + claim UI) |
 | Network | Stellar Testnet (`Test SDF Network ; September 2015`) |
 | Deployer identity | `pamana-testnet` → `GDVWTEQQHWWPB7BHGVZDNZQGNWNB4EDLOKTHHNW2AXLI7JBC6SRJM4X3` |
 | Factory contract ID | `CAMKUFDTTIVDL4Z2UV6UISUDGSONOCCEZHTYH3EFTIA2ILSLLKV4F5RH` |
@@ -195,13 +195,27 @@ Token = native XLM SAC `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
 
 ---
 
-## Phase 5 — Frontend foundation ⬜
-**Date:** — · **Status:** Not started
+## Phase 5 — Frontend foundation ✅ (build-complete; device test pending)
+**Date:** 2026-07-06 · **Status:** Complete (code) — live Android wallet test is the user's step
+
+### Changes
+- Mobile-first React 19 + Vite + Tailwind v4 app, wired to the **live Phase 4 factory** (`CAMKUF…`) on Testnet.
+- **Design**: imported the Stitch "Pamana On-Chain Inheritance Vault" project (Heritage Protocol theme) → design tokens in `index.css` (emerald `#003527`/`#064e3b`, amber `#fea619`, cream `#faf9f6`, Inter), status-light heartbeat motif, logo. Reference HTML saved in `docs/design/stitch/`.
+- **Wallet**: Stellar Wallets Kit v2.5 (static API) — Freighter (desktop) + LOBSTR (Android) + xBull + Albedo via `authModal`.
+- **Contract layer** (`stellar-sdk` 16): reads via `simulateTransaction`, writes via prepare → sign (kit) → send → poll.
+- **Pages**: Landing/connect · Owner Dashboard (status light + day countdown + balance + heirs + check-in) · Create Vault (timeout presets) · Deposit. Router with wallet gating + bottom nav. Placeholders for heirs/withdraw (Phase 6).
+
+### Tests
+| Check | Result |
+|-------|--------|
+| `npm run build` (tsc + vite) | ✅ clean, 558 modules |
+| dev server serves app shell | ✅ HTTP 200 |
+| live wallet connect + create/deposit/check-in on Android | ⏳ user device test |
 
 ### Success criteria
-- [ ] Owner connects wallet, creates vault, deposits USDC
-- [ ] Status light + countdown live
-- [ ] check_in updates on-chain heartbeat (verified in Stellar Expert)
+- [x] Code wired to live contracts: connect → create vault → deposit → status light + countdown → check-in
+- [x] Builds + serves clean
+- [ ] On-device Android verification (owner flow end-to-end) — **user step**
 
 ---
 
@@ -278,3 +292,4 @@ The vault crate is split into two source files purely for organization. They com
 | 2026-07-06 | 2 | Multi-heir BPS validation + TotalLocked snapshot; 16/16 tests green |
 | 2026-07-06 | 3 | Trust-fund release schedule (ReleaseSlot, tranches); 20/20 tests green |
 | 2026-07-06 | 4 | Factory deploy per-owner vaults; deployed to Testnet; live claim verified (+100 XLM) |
+| 2026-07-06 | 5 | Mobile-first frontend (Stitch Heritage theme) wired to live factory; builds clean |
