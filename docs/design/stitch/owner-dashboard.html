@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pamana - Owner Dashboard</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-container": "#fea619",
+                    "surface-bright": "#faf9f6",
+                    "secondary-fixed-dim": "#ffb95f",
+                    "secondary-fixed": "#ffddb8",
+                    "surface-tint": "#2b6954",
+                    "on-primary-container": "#80bea6",
+                    "surface": "#faf9f6",
+                    "on-secondary": "#ffffff",
+                    "surface-container": "#efeeeb",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-high": "#e9e8e5",
+                    "inverse-surface": "#2f312f",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#e3e2e0",
+                    "on-surface": "#1a1c1a",
+                    "on-tertiary-container": "#aab1c5",
+                    "secondary": "#855300",
+                    "on-secondary-fixed": "#2a1700",
+                    "background": "#faf9f6",
+                    "on-error-container": "#93000a",
+                    "error-container": "#ffdad6",
+                    "primary-container": "#064e3b",
+                    "on-error": "#ffffff",
+                    "outline-variant": "#bfc9c3",
+                    "surface-dim": "#dbdad7",
+                    "tertiary-container": "#3d4455",
+                    "on-secondary-fixed-variant": "#653e00",
+                    "inverse-primary": "#95d3ba",
+                    "on-surface-variant": "#404944",
+                    "on-background": "#1a1c1a",
+                    "primary": "#003527",
+                    "on-tertiary-fixed": "#141b2b",
+                    "surface-container-highest": "#e3e2e0",
+                    "on-primary-fixed": "#002117",
+                    "on-tertiary-fixed-variant": "#404758",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed": "#dce2f7",
+                    "on-secondary-container": "#684000",
+                    "primary-fixed-dim": "#95d3ba",
+                    "inverse-on-surface": "#f2f1ee",
+                    "on-primary-fixed-variant": "#0b513d",
+                    "outline": "#707974",
+                    "tertiary": "#272e3e",
+                    "tertiary-fixed-dim": "#c0c6db",
+                    "surface-container-low": "#f4f3f1",
+                    "primary-fixed": "#b0f0d6",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px",
+                    "2xl": "24px" // Adding 24px radius as per guidelines
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "container-margin": "20px",
+                    "md": "16px",
+                    "sm": "12px",
+                    "xs": "4px",
+                    "base": "8px",
+                    "lg": "24px",
+                    "gutter": "16px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "price-display": ["Inter"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                    "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                    "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                    "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                    "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                    "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                    "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                    "price-display": ["36px", { "lineHeight": "44px", "fontWeight": "700" }]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        .status-glow {
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(6, 78, 59, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(6, 78, 59, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(6, 78, 59, 0); }
+        }
+
+        /* Ambient Shadows for Cards */
+        .card-shadow {
+            box-shadow: 0 10px 30px rgba(6, 78, 59, 0.05);
+        }
+        
+        /* Hide scrollbar for clean UI */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        * {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen pb-[80px]">
+<!-- TopAppBar Container -->
+<header class="bg-surface dark:bg-on-primary-fixed docked full-width top-0 z-50 shadow-sm shadow-primary/5">
+<div class="flex justify-between items-center px-container-margin h-16 max-w-[600px] mx-auto w-full">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-weight="fill" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">Pamana</h1>
+</div>
+<!-- Identity Badge (Filipino Identity / Wallet) -->
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-secondary-container bg-surface-container-low card-shadow">
+<span class="w-2 h-2 rounded-full bg-secondary-container"></span>
+<span class="font-label-md text-label-md text-on-surface-variant">Juan D. • 0x8a...4b2</span>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A small, professional portrait photo of an older Filipino man smiling warmly. He is wearing a simple, clean collared shirt. The lighting is soft and natural, suggesting a bright sunny day. The background is slightly blurred but appears to be a cozy home interior with light cream walls, matching the warm minimalism and reassuring tone of the brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSju4_3E_jJj2dpFfejKB0EXredAWpS89zNdD1ozLADCQu3leAyu_wBhLMkuZqp8XkCyT6s2FAYpUnou_GfN_jx5rvrb49gTzY0eMzsEWwXsbwCMLnCSjk8QJ5NP3cQg7ghY9IlBIAQTU2eYKADn30nvNUPUVZ9xzsTGD7Kapwjgq6sh4IxJVxbnLhK_g6vgCe8OIH0RfpHPOT3xt1_oblaP2Uh6p8GxAGm20YUSgVvXLapxdVN6pGV_wObYSbbB2DczaysPcjqnlu"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="max-w-[600px] mx-auto px-container-margin pt-md pb-xl flex flex-col gap-lg">
+<!-- Large Status Card (The Heartbeat) -->
+<section class="bg-surface-container-lowest rounded-2xl p-lg card-shadow flex flex-col items-center justify-center text-center relative overflow-hidden border border-outline-variant/30">
+<!-- Subtle background pattern -->
+<div class="absolute inset-0 opacity-5 pointer-events-none" style="background-image: radial-gradient(circle at 50% 50%, #064E3B 1px, transparent 1px); background-size: 20px 20px;"></div>
+<div class="relative z-10 flex flex-col items-center">
+<!-- Glowing Status Light Ring -->
+<div class="w-24 h-24 rounded-full border-4 border-primary-container/20 flex items-center justify-center mb-sm relative">
+<div class="w-20 h-20 rounded-full border-4 border-primary-container/40 flex items-center justify-center">
+<div class="w-12 h-12 rounded-full bg-primary-container status-glow flex items-center justify-center">
+<span class="font-headline-md text-headline-md text-on-primary">89</span>
+</div>
+</div>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Alive</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-lg">Next check-in in 89 days</p>
+<!-- Big Primary Button -->
+<button class="bg-primary-container text-on-primary font-label-md text-label-md w-full h-[56px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity active:scale-95">
+<span class="material-symbols-outlined">favorite</span>
+                    I'm Alive
+                </button>
+</div>
+</section>
+<!-- Vault Balance Card (Heritage Card) -->
+<section class="bg-surface-container-lowest rounded-2xl p-lg card-shadow border border-outline-variant/30">
+<div class="flex justify-between items-start mb-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Pamana Vault</span>
+<!-- Last Updated Timestamp -->
+<span class="text-[12px] text-outline mt-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">update</span>
+                        Updated just now
+                    </span>
+</div>
+<!-- Crypto/PHP Toggle -->
+<div class="flex bg-surface-container-low rounded-lg p-1 border border-outline-variant/50">
+<button class="px-3 py-1 rounded bg-surface shadow-sm font-label-md text-[12px] text-on-surface">PHP</button>
+<button class="px-3 py-1 rounded text-on-surface-variant font-label-md text-[12px] hover:text-on-surface">USDC</button>
+</div>
+</div>
+<div class="flex flex-col gap-1 mb-lg">
+<div class="font-price-display text-price-display text-on-surface">₱28,600</div>
+<div class="font-body-lg text-body-lg text-on-surface-variant">≈ 500 USDC</div>
+</div>
+<!-- Quick Actions Row -->
+<div class="grid grid-cols-3 gap-md">
+<button class="flex flex-col items-center gap-xs hover:opacity-80 transition-opacity">
+<div class="w-12 h-12 rounded-full bg-primary-container/10 text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">arrow_downward</span>
+</div>
+<span class="font-label-md text-[12px] text-on-surface">Deposit</span>
+</button>
+<button class="flex flex-col items-center gap-xs hover:opacity-80 transition-opacity">
+<div class="w-12 h-12 rounded-full bg-secondary-container/10 text-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">person_add</span>
+</div>
+<span class="font-label-md text-[12px] text-on-surface">Add Heirs</span>
+</button>
+<button class="flex flex-col items-center gap-xs hover:opacity-80 transition-opacity">
+<div class="w-12 h-12 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">arrow_upward</span>
+</div>
+<span class="font-label-md text-[12px] text-on-surface">Withdraw</span>
+</button>
+</div>
+</section>
+<!-- Heirs Summary List -->
+<section class="flex flex-col gap-sm">
+<div class="flex justify-between items-center mb-xs px-2">
+<h3 class="font-headline-md text-[20px] font-semibold text-on-surface">Heirs (2)</h3>
+<button class="text-primary-container font-label-md text-label-md flex items-center gap-1 hover:opacity-80">
+                    Manage
+                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+<!-- List Item 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-md flex items-center justify-between card-shadow border border-outline-variant/20">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-variant">
+<img class="w-full h-full object-cover" data-alt="A professional, warm portrait of a young Filipina woman in her late 20s. She has a gentle smile and is wearing a neat, light-colored blouse. The lighting is soft and natural. The background is a clean, out-of-focus light cream wall. The overall feel is modern, elegant, and reassuring, fitting a premium family finance app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAP7VVHburz-FMh8TYtvitoPzTEPbeD7F5K6Z0QOf2ntu_NCcg55_jnpIhJXE2h80mg6pF5Z3a5Hn2XxCAA1GY9GFkbjQ3QdspXSbJ3RRztZQHn1ubiV5qjaodWbv3q2GGxdXsh7PaKD9KRk2bNac4Cu_s6SIvHV0W1Vk6z3ubLAgCW6k4FM0LdtGze4mbjjxVL-r4T80snE2mJuyC0YfvF8PR80DFv7SxiccE5LhPRikQE-QfclQA9_ZivyNCJhZSHuQlQLUh_DYdv"/>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Maria Santos</span>
+<span class="font-body-md text-[14px] text-on-surface-variant">Daughter</span>
+</div>
+</div>
+<div class="font-headline-md text-[20px] font-bold text-primary-container">60%</div>
+</div>
+<!-- List Item 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-md flex items-center justify-between card-shadow border border-outline-variant/20">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-variant flex items-center justify-center text-on-surface-variant font-label-md">
+                        JC
+                    </div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Jose Cruz</span>
+<span class="font-body-md text-[14px] text-on-surface-variant">Son</span>
+</div>
+</div>
+<div class="font-headline-md text-[20px] font-bold text-primary-container">40%</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar Container (Mobile Only) -->
+<nav class="md:hidden bg-surface dark:bg-on-primary-fixed fixed bottom-0 w-full z-50 shadow-[0_-10px_30px_rgba(6,78,59,0.05)]">
+<div class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 bg-surface dark:bg-on-primary-fixed max-w-[600px] mx-auto right-0">
+<!-- Active: Home -->
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed font-bold hover:bg-surface-container-low transition-colors w-16 rounded-lg py-1">
+<span class="material-symbols-outlined mb-1" data-weight="fill" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-md text-[10px] leading-tight">Home</span>
+</button>
+<!-- Inactive: Heirs -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant/70 hover:bg-surface-container-low transition-colors w-16 rounded-lg py-1">
+<span class="material-symbols-outlined mb-1">group</span>
+<span class="font-label-md text-[10px] leading-tight font-normal">Heirs</span>
+</button>
+<!-- Inactive: Activity -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant/70 hover:bg-surface-container-low transition-colors w-16 rounded-lg py-1">
+<span class="material-symbols-outlined mb-1">history</span>
+<span class="font-label-md text-[10px] leading-tight font-normal">Activity</span>
+</button>
+<!-- Inactive: Settings -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant/70 hover:bg-surface-container-low transition-colors w-16 rounded-lg py-1">
+<span class="material-symbols-outlined mb-1">settings</span>
+<span class="font-label-md text-[10px] leading-tight font-normal">Settings</span>
+</button>
+</div>
+</nav>
+</body></html>

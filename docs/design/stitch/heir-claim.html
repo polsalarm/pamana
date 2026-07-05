@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pamana - Heir Claim</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#fea619",
+                        "surface-bright": "#faf9f6",
+                        "secondary-fixed-dim": "#ffb95f",
+                        "secondary-fixed": "#ffddb8",
+                        "surface-tint": "#2b6954",
+                        "on-primary-container": "#80bea6",
+                        "surface": "#faf9f6",
+                        "on-secondary": "#ffffff",
+                        "surface-container": "#efeeeb",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#e9e8e5",
+                        "inverse-surface": "#2f312f",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e3e2e0",
+                        "on-surface": "#1a1c1a",
+                        "on-tertiary-container": "#aab1c5",
+                        "secondary": "#855300",
+                        "on-secondary-fixed": "#2a1700",
+                        "background": "#faf9f6",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#064e3b",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#bfc9c3",
+                        "surface-dim": "#dbdad7",
+                        "tertiary-container": "#3d4455",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "inverse-primary": "#95d3ba",
+                        "on-surface-variant": "#404944",
+                        "on-background": "#1a1c1a",
+                        "primary": "#003527",
+                        "on-tertiary-fixed": "#141b2b",
+                        "surface-container-highest": "#e3e2e0",
+                        "on-primary-fixed": "#002117",
+                        "on-tertiary-fixed-variant": "#404758",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#dce2f7",
+                        "on-secondary-container": "#684000",
+                        "primary-fixed-dim": "#95d3ba",
+                        "inverse-on-surface": "#f2f1ee",
+                        "on-primary-fixed-variant": "#0b513d",
+                        "outline": "#707974",
+                        "tertiary": "#272e3e",
+                        "tertiary-fixed-dim": "#c0c6db",
+                        "surface-container-low": "#f4f3f1",
+                        "primary-fixed": "#b0f0d6",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "container-margin": "20px",
+                        "md": "16px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "base": "8px",
+                        "lg": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "price-display": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "price-display": ["36px", { "lineHeight": "44px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Dark mode overrides for specific theme request */
+        .dark body {
+            background-color: #111827; /* Deep charcoal as requested */
+            color: #faf9f6;
+        }
+        .dark .bg-surface-dark {
+            background-color: #1f2937;
+        }
+        
+        /* Ambient Glow Animations */
+        @keyframes pulse-amber {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+        .animate-pulse-amber {
+            animation: pulse-amber 2s infinite;
+        }
+        
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(6, 78, 59, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(6, 78, 59, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(6, 78, 59, 0); }
+        }
+        .animate-pulse-green {
+            animation: pulse-green 3s infinite;
+        }
+
+        .glass-card {
+            background: rgba(31, 41, 55, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col items-center">
+<!-- Top Navigation (Suppressed for transactional focus, but keeping minimal header) -->
+<header class="w-full max-w-[600px] flex justify-between items-center px-container-margin h-16 z-50">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed-dim" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<span class="font-headline-md text-headline-md font-bold text-surface-bright">Pamana</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-dark flex items-center justify-center border border-outline">
+<span class="material-symbols-outlined text-outline-variant text-sm" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="w-full max-w-[600px] flex-1 px-container-margin py-xl flex flex-col gap-lg pb-32">
+<!-- Header Section -->
+<div class="flex flex-col gap-sm text-center pt-md pb-lg">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-surface-bright">
+                You have an inheritance to claim.
+            </h1>
+<p class="font-body-md text-body-md text-outline-variant">
+                Your family has secured your future through Pamana.
+            </p>
+</div>
+<!-- Inheritance Card (Unlocked State) -->
+<div class="glass-card rounded-xl p-lg shadow-[0_10px_30px_rgba(245,158,11,0.05)] relative overflow-hidden group transition-all duration-300">
+<!-- Decorative gradient accent -->
+<div class="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl group-hover:bg-amber-500/20 transition-all duration-500"></div>
+<div class="relative z-10 flex flex-col gap-lg">
+<!-- Status Header -->
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3 bg-amber-500/10 px-4 py-2 rounded-full border border-amber-500/20">
+<div class="w-3 h-3 rounded-full bg-amber-500 animate-pulse-amber"></div>
+<span class="font-label-md text-label-md text-amber-400">Inheritance Unlocked</span>
+</div>
+<span class="font-body-md text-body-md text-outline-variant">From: <strong class="text-surface-bright">Maria Santos</strong></span>
+</div>
+<!-- Value Display -->
+<div class="flex flex-col gap-2">
+<span class="font-label-md text-label-md text-outline-variant uppercase tracking-wider">Your Allocated Share</span>
+<div class="flex items-baseline gap-3">
+<span class="font-price-display text-price-display text-surface-bright">₱20,020</span>
+<span class="font-body-lg text-body-lg text-outline-variant">(350 USDC)</span>
+</div>
+</div>
+<!-- Claim Action -->
+<button class="w-full h-14 bg-amber-500 hover:bg-amber-600 text-on-surface font-label-md text-label-md rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 mt-2">
+                    Claim My Share
+                    <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Divider -->
+<div class="flex items-center gap-4 py-md">
+<div class="h-px bg-outline-variant/20 flex-1"></div>
+<span class="font-label-md text-label-md text-outline-variant uppercase">Or</span>
+<div class="h-px bg-outline-variant/20 flex-1"></div>
+</div>
+<!-- Inheritance Card (Locked State Example) -->
+<div class="glass-card rounded-xl p-lg opacity-70 hover:opacity-100 transition-opacity duration-300">
+<div class="flex flex-col gap-md">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline-variant">lock</span>
+<span class="font-label-md text-label-md text-outline-variant">Future Allocation</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary-fixed-dim animate-pulse-green"></div>
+<span class="font-label-md text-label-md text-primary-fixed-dim">Active</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-surface-dim">
+<strong class="text-surface-bright">Protected</strong> — Juan Dela Cruz is still active. Your inheritance is secure and being held trustlessly on-chain.
+                </p>
+</div>
+</div>
+<!-- Informational Callout -->
+<div class="mt-auto p-md rounded-lg border border-outline-variant/20 bg-surface-dark/50 flex gap-4 items-start">
+<span class="material-symbols-outlined text-primary-fixed-dim">info</span>
+<p class="font-body-md text-body-md text-surface-dim text-sm">
+                Claiming your share will transfer the assets directly to your connected wallet. This action is recorded permanently.
+            </p>
+</div>
+</main>
+<!-- Bottom Navigation Suppressed for Claim Screen focus -->
+</body></html>

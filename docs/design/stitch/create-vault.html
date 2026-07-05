@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pamana - Create Vault</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#fea619",
+                        "surface-bright": "#faf9f6",
+                        "secondary-fixed-dim": "#ffb95f",
+                        "secondary-fixed": "#ffddb8",
+                        "surface-tint": "#2b6954",
+                        "on-primary-container": "#80bea6",
+                        "surface": "#faf9f6",
+                        "on-secondary": "#ffffff",
+                        "surface-container": "#efeeeb",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#e9e8e5",
+                        "inverse-surface": "#2f312f",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e3e2e0",
+                        "on-surface": "#1a1c1a",
+                        "on-tertiary-container": "#aab1c5",
+                        "secondary": "#855300",
+                        "on-secondary-fixed": "#2a1700",
+                        "background": "#faf9f6",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#064e3b",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#bfc9c3",
+                        "surface-dim": "#dbdad7",
+                        "tertiary-container": "#3d4455",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "inverse-primary": "#95d3ba",
+                        "on-surface-variant": "#404944",
+                        "on-background": "#1a1c1a",
+                        "primary": "#003527",
+                        "on-tertiary-fixed": "#141b2b",
+                        "surface-container-highest": "#e3e2e0",
+                        "on-primary-fixed": "#002117",
+                        "on-tertiary-fixed-variant": "#404758",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#dce2f7",
+                        "on-secondary-container": "#684000",
+                        "primary-fixed-dim": "#95d3ba",
+                        "inverse-on-surface": "#f2f1ee",
+                        "on-primary-fixed-variant": "#0b513d",
+                        "outline": "#707974",
+                        "tertiary": "#272e3e",
+                        "tertiary-fixed-dim": "#c0c6db",
+                        "surface-container-low": "#f4f3f1",
+                        "primary-fixed": "#b0f0d6",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "container-margin": "20px",
+                        "md": "16px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "base": "8px",
+                        "lg": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "price-display": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "price-display": ["36px", { "lineHeight": "44px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #064e3b; /* primary-container */
+            cursor: pointer;
+            margin-top: -10px;
+            box-shadow: 0 4px 6px -1px rgba(6, 78, 59, 0.2);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #e3e2e0; /* surface-variant */
+            border-radius: 2px;
+        }
+        input[type=range]:focus::-webkit-slider-runnable-track {
+            background: #bfc9c3; /* outline-variant */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface min-h-screen text-on-surface font-body-md antialiased flex flex-col items-center">
+<!-- Top Navigation (Onboarding - Suppressed global nav, focused header) -->
+<header class="w-full max-w-[600px] flex justify-between items-center px-container-margin h-16 z-50 bg-surface">
+<button aria-label="Go back" class="text-on-surface-variant hover:opacity-80 transition-opacity p-2 -ml-2">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<div class="flex space-x-2">
+<div class="w-2 h-2 rounded-full bg-surface-variant"></div>
+<div class="w-2 h-2 rounded-full bg-surface-variant"></div>
+<div class="w-8 h-2 rounded-full bg-primary-container"></div>
+<div class="w-2 h-2 rounded-full bg-surface-variant"></div>
+</div>
+<div class="w-8"></div> <!-- Spacer for centering -->
+</header>
+<!-- Main Content Canvas -->
+<main class="w-full max-w-[600px] px-container-margin flex-1 flex flex-col pb-[100px]">
+<!-- Header Copy -->
+<div class="mt-md mb-xl">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-sm">
+                Setting up your legacy.
+            </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+                Choose how often you'll check in to prove you're active.
+            </p>
+</div>
+<!-- Timeout Selector -->
+<section class="mb-xl">
+<h2 class="font-label-md text-label-md text-on-surface mb-md uppercase">Check-in Timeout</h2>
+<!-- Preset Chips -->
+<div class="flex gap-sm mb-lg">
+<button class="flex-1 py-3 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors chip-btn" data-value="30">
+                    30 days
+                </button>
+<button class="flex-1 py-3 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors chip-btn" data-value="60">
+                    60 days
+                </button>
+<button class="flex-1 py-3 rounded-full bg-primary-container text-surface-bright font-label-md text-label-md transition-colors chip-btn active-chip" data-value="90">
+                    90 days
+                </button>
+</div>
+<!-- Slider -->
+<div class="px-2">
+<input class="w-full" id="timeout-slider" max="365" min="30" type="range" value="90"/>
+<div class="flex justify-between mt-sm text-on-surface-variant font-body-md text-body-md text-sm">
+<span>30d</span>
+<span class="font-bold text-primary-container" id="slider-value">90 days</span>
+<span>365d</span>
+</div>
+</div>
+</section>
+<!-- Token Confirmation Card -->
+<section class="mb-lg">
+<div class="bg-surface-container-lowest rounded-xl p-lg flex items-center gap-md" style="box-shadow: 0 10px 30px rgba(6, 78, 59, 0.05);">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary-container shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">currency_exchange</span>
+</div>
+<div>
+<h3 class="font-headline-md text-[18px] leading-[24px] font-semibold text-on-surface">USDC on Stellar</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Default vault currency</p>
+</div>
+<div class="ml-auto">
+<span class="material-symbols-outlined text-primary-container">check_circle</span>
+</div>
+</div>
+</section>
+<!-- Reassuring Copy -->
+<section class="bg-surface-container-low rounded-xl p-md flex gap-sm items-start border border-surface-variant/50">
+<span class="material-symbols-outlined text-primary-container mt-xs shrink-0" style="font-variation-settings: 'FILL' 1;">shield_lock</span>
+<p class="font-body-md text-body-md text-on-surface-variant text-[15px] leading-relaxed">
+                If you don't check in before the timeout, your vault automatically distributes to your heirs. <strong class="text-on-surface">You stay in control.</strong>
+</p>
+</section>
+</main>
+<!-- Fixed Bottom Action (Thumb Zone Focus) -->
+<div class="fixed bottom-0 left-0 w-full bg-gradient-to-t from-surface via-surface to-transparent pt-xl pb-container-margin px-container-margin z-50 flex justify-center">
+<div class="w-full max-w-[600px]">
+<button class="w-full min-h-[56px] rounded-full bg-primary-container text-surface-bright font-label-md text-label-md flex items-center justify-center gap-2 hover:opacity-90 transition-opacity" style="box-shadow: 0 4px 14px rgba(6, 78, 59, 0.2);">
+                Create My Vault
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+<script>
+        // Simple interaction logic for the slider and chips
+        const slider = document.getElementById('timeout-slider');
+        const sliderValueDisplay = document.getElementById('slider-value');
+        const chips = document.querySelectorAll('.chip-btn');
+
+        function updateActiveChip(value) {
+            chips.forEach(chip => {
+                if (chip.dataset.value === value.toString()) {
+                    chip.classList.remove('bg-surface-container', 'text-on-surface-variant');
+                    chip.classList.add('bg-primary-container', 'text-surface-bright', 'active-chip');
+                } else {
+                    chip.classList.add('bg-surface-container', 'text-on-surface-variant');
+                    chip.classList.remove('bg-primary-container', 'text-surface-bright', 'active-chip');
+                }
+            });
+        }
+
+        slider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            sliderValueDisplay.textContent = `${val} days`;
+            updateActiveChip(val);
+        });
+
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                const val = chip.dataset.value;
+                slider.value = val;
+                sliderValueDisplay.textContent = `${val} days`;
+                updateActiveChip(val);
+            });
+        });
+    </script>
+</body></html>

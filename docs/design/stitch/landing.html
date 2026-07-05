@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Pamana - Your pamana moves on its own</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-container": "#fea619",
+                    "surface-bright": "#faf9f6",
+                    "secondary-fixed-dim": "#ffb95f",
+                    "secondary-fixed": "#ffddb8",
+                    "surface-tint": "#2b6954",
+                    "on-primary-container": "#80bea6",
+                    "surface": "#faf9f6",
+                    "on-secondary": "#ffffff",
+                    "surface-container": "#efeeeb",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-high": "#e9e8e5",
+                    "inverse-surface": "#2f312f",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#e3e2e0",
+                    "on-surface": "#1a1c1a",
+                    "on-tertiary-container": "#aab1c5",
+                    "secondary": "#855300",
+                    "on-secondary-fixed": "#2a1700",
+                    "background": "#faf9f6",
+                    "on-error-container": "#93000a",
+                    "error-container": "#ffdad6",
+                    "primary-container": "#064e3b",
+                    "on-error": "#ffffff",
+                    "outline-variant": "#bfc9c3",
+                    "surface-dim": "#dbdad7",
+                    "tertiary-container": "#3d4455",
+                    "on-secondary-fixed-variant": "#653e00",
+                    "inverse-primary": "#95d3ba",
+                    "on-surface-variant": "#404944",
+                    "on-background": "#1a1c1a",
+                    "primary": "#003527",
+                    "on-tertiary-fixed": "#141b2b",
+                    "surface-container-highest": "#e3e2e0",
+                    "on-primary-fixed": "#002117",
+                    "on-tertiary-fixed-variant": "#404758",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed": "#dce2f7",
+                    "on-secondary-container": "#684000",
+                    "primary-fixed-dim": "#95d3ba",
+                    "inverse-on-surface": "#f2f1ee",
+                    "on-primary-fixed-variant": "#0b513d",
+                    "outline": "#707974",
+                    "tertiary": "#272e3e",
+                    "tertiary-fixed-dim": "#c0c6db",
+                    "surface-container-low": "#f4f3f1",
+                    "primary-fixed": "#b0f0d6",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px",
+                    "2xl": "1.5rem"
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "container-margin": "20px",
+                    "md": "16px",
+                    "sm": "12px",
+                    "xs": "4px",
+                    "base": "8px",
+                    "lg": "24px",
+                    "gutter": "16px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter", "sans-serif"],
+                    "label-md": ["Inter", "sans-serif"],
+                    "headline-md": ["Inter", "sans-serif"],
+                    "display-lg": ["Inter", "sans-serif"],
+                    "headline-lg": ["Inter", "sans-serif"],
+                    "headline-lg-mobile": ["Inter", "sans-serif"],
+                    "body-lg": ["Inter", "sans-serif"],
+                    "price-display": ["Inter", "sans-serif"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "price-display": ["36px", {"lineHeight": "44px", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .heritage-card-shadow { box-shadow: 0 10px 30px rgba(6, 78, 59, 0.05); }
+        .glass-sheet { background: rgba(250, 249, 246, 0.95); backdrop-filter: blur(12px); }
+        
+        /* Ambient Glow Effect */
+        .ambient-glow {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150vw;
+            height: 100vh;
+            background: radial-gradient(circle at top center, rgba(176, 240, 214, 0.2) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Sheet Animation */
+        #wallet-sheet {
+            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease;
+        }
+        #wallet-sheet.hidden {
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+            display: flex !important; /* Keep it in DOM but hidden to animate */
+            visibility: hidden;
+        }
+        #wallet-sheet.visible {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen relative overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- Ambient Glow Background -->
+<div class="ambient-glow"></div>
+<!-- Main Container -->
+<main class="relative z-10 max-w-[600px] mx-auto min-h-screen flex flex-col px-container-margin pt-xl pb-xl">
+<!-- Header / Logo Area -->
+<header class="flex flex-col items-center justify-center pt-xl pb-lg relative">
+<div class="w-[100px] h-[100px] rounded-full overflow-hidden mb-sm heritage-card-shadow relative bg-surface-container-low flex items-center justify-center">
+<img alt="Pamana Logo" class="w-full h-full object-cover relative z-10" src="https://lh3.googleusercontent.com/aida/AP1WRLtETj-HB0I_zyroKm5r5hJPRd_g3yhpc1tVxiRp9g-J6toErrgCQEqV3GVoQlAP806l2R0UrOaVSG87184d0K2ccBTpayXKd4sF9qOq1nUduHQa8hiIPo57n91n1gNMkdVKv_gN728wWhoHIO_bAn4jxV6fHPBSTNib3cWPZqktbU46fxIGH2lxiM7XfPOip1BtwllLE4sTm5B0JuS6DOHGmSAvSaa9KnbtLu8sbyagLjrHHPxPZvc2t_Tv"/>
+<!-- Decorative subtle pulse ring behind logo -->
+<div class="absolute inset-0 border-2 border-primary-container/10 rounded-full animate-ping" style="animation-duration: 3s;"></div>
+</div>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-primary tracking-tight">Pamana</h1>
+</header>
+<!-- Hero Content -->
+<section class="flex flex-col items-center text-center mb-xl flex-grow justify-center">
+<h2 class="font-display-lg text-on-surface mb-md leading-tight">Your pamana moves on its own.</h2>
+<p class="font-body-lg text-on-surface-variant max-w-sm mb-xl">A smart, self-executing legacy vault that ensures your family is cared for, without relying on third parties.</p>
+<button class="w-full max-w-sm bg-primary-container text-on-primary h-[56px] rounded-full font-label-md uppercase tracking-wider hover:opacity-90 transition-opacity active:scale-[0.98] flex items-center justify-center gap-2 heritage-card-shadow" id="connect-wallet-btn">
+                Connect Wallet
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">wallet</span>
+</button>
+</section>
+<!-- How it works (Bento Style) -->
+<section class="mb-xl w-full">
+<h3 class="font-label-md text-on-surface-variant uppercase tracking-widest text-center mb-md opacity-60">How it works</h3>
+<div class="flex flex-col gap-sm">
+<!-- Step 1 -->
+<div class="bg-surface-container-lowest rounded-2xl p-lg heritage-card-shadow border border-outline-variant/30 flex items-start gap-md">
+<div class="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary-container">lock</span>
+</div>
+<div>
+<h4 class="font-label-md text-on-surface mb-xs">Create vault</h4>
+<p class="font-body-md text-on-surface-variant text-sm">Secure your assets on the Stellar network with military-grade encryption.</p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="bg-surface-container-lowest rounded-2xl p-lg heritage-card-shadow border border-outline-variant/30 flex items-start gap-md relative overflow-hidden">
+<div class="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center flex-shrink-0 relative z-10">
+<span class="material-symbols-outlined text-primary-container">group_add</span>
+</div>
+<div class="relative z-10">
+<h4 class="font-label-md text-on-surface mb-xs">Add heirs</h4>
+<p class="font-body-md text-on-surface-variant text-sm">Designate your family members seamlessly and assign clear inheritance rules.</p>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="bg-primary-container rounded-2xl p-lg heritage-card-shadow flex items-start gap-md text-on-primary relative overflow-hidden group">
+<!-- Subtle glow inside the primary card -->
+<div class="absolute -right-8 -top-8 w-32 h-32 bg-primary-fixed-dim/20 rounded-full blur-2xl"></div>
+<div class="w-10 h-10 rounded-full bg-on-primary/10 flex items-center justify-center flex-shrink-0 relative z-10 border border-on-primary/20">
+<!-- Status Light Component -->
+<div class="relative flex items-center justify-center">
+<div class="w-3 h-3 rounded-full bg-primary-fixed relative z-10"></div>
+<div class="absolute w-5 h-5 rounded-full bg-primary-fixed/40 animate-ping"></div>
+</div>
+</div>
+<div class="relative z-10">
+<h4 class="font-label-md text-on-primary mb-xs">Stay alive</h4>
+<p class="font-body-md text-primary-fixed-dim text-sm">Simply check in periodically to prove vitality. Pamana handles the rest automatically.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Trust Signals Footer -->
+<footer class="mt-auto pt-lg border-t border-outline-variant/20 flex flex-col items-center justify-center gap-xs pb-sm">
+<div class="flex items-center gap-2 text-on-surface-variant/80">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+<span class="font-label-md text-xs tracking-wider">Enforced on-chain. No company holds your keys.</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant/60">
+<span class="font-label-md text-xs tracking-wider uppercase">Powered by Stellar</span>
+</div>
+</footer>
+</main>
+<!-- Multi-Wallet Chooser Sheet (Hidden by default) -->
+<!-- Added fixed positioning and high z-index to overlay entire screen -->
+<div class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm z-40 opacity-0 pointer-events-none transition-opacity duration-300" id="wallet-backdrop"></div>
+<div class="fixed bottom-0 left-0 right-0 z-50 max-w-[600px] mx-auto glass-sheet rounded-t-[32px] pt-sm pb-xl px-container-margin border-t border-outline-variant/20 heritage-card-shadow hidden flex-col" id="wallet-sheet">
+<!-- Sheet Handle -->
+<div class="w-12 h-1.5 bg-outline-variant/50 rounded-full mx-auto mb-lg"></div>
+<div class="flex justify-between items-center mb-lg">
+<h2 class="font-headline-md text-on-surface">Connect Wallet</h2>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-variant transition-colors text-on-surface-variant" id="close-sheet-btn">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<p class="font-body-md text-on-surface-variant mb-md">Select your preferred method to access your Pamana vault.</p>
+<div class="flex flex-col gap-sm">
+<!-- Passkey -->
+<button class="w-full bg-surface rounded-2xl p-md flex items-center gap-md border border-outline-variant/30 hover:border-primary-container/50 hover:bg-surface-container-lowest transition-all group">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-primary-container group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">passkey</span>
+</div>
+<div class="text-left flex-grow">
+<h3 class="font-label-md text-on-surface text-base">Passkey</h3>
+<p class="font-body-md text-on-surface-variant text-xs">Biometric &amp; Device Native</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary-container transition-colors">chevron_right</span>
+</button>
+<!-- LOBSTR -->
+<button class="w-full bg-surface rounded-2xl p-md flex items-center gap-md border border-outline-variant/30 hover:border-primary-container/50 hover:bg-surface-container-lowest transition-all group">
+<div class="w-12 h-12 rounded-full bg-[#00A3E0]/10 flex items-center justify-center text-[#00A3E0] group-hover:scale-110 transition-transform font-bold text-xl">
+                    L
+                </div>
+<div class="text-left flex-grow">
+<h3 class="font-label-md text-on-surface text-base">LOBSTR</h3>
+<p class="font-body-md text-on-surface-variant text-xs">Stellar Wallet Extension</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary-container transition-colors">chevron_right</span>
+</button>
+<!-- Freighter -->
+<button class="w-full bg-surface rounded-2xl p-md flex items-center gap-md border border-outline-variant/30 hover:border-primary-container/50 hover:bg-surface-container-lowest transition-all group">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">anchor</span>
+</div>
+<div class="text-left flex-grow">
+<h3 class="font-label-md text-on-surface text-base">Freighter</h3>
+<p class="font-body-md text-on-surface-variant text-xs">Browser Extension</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary-container transition-colors">chevron_right</span>
+</button>
+<!-- xBull -->
+<button class="w-full bg-surface rounded-2xl p-md flex items-center gap-md border border-outline-variant/30 hover:border-primary-container/50 hover:bg-surface-container-lowest transition-all group">
+<div class="w-12 h-12 rounded-full bg-[#1C1C1C]/10 flex items-center justify-center text-[#1C1C1C] group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">cruelty_free</span>
+</div>
+<div class="text-left flex-grow">
+<h3 class="font-label-md text-on-surface text-base">xBull</h3>
+<p class="font-body-md text-on-surface-variant text-xs">Multi-platform Wallet</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary-container transition-colors">chevron_right</span>
+</button>
+</div>
+</div>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const connectBtn = document.getElementById('connect-wallet-btn');
+            const sheet = document.getElementById('wallet-sheet');
+            const backdrop = document.getElementById('wallet-backdrop');
+            const closeBtn = document.getElementById('close-sheet-btn');
+
+            function openSheet() {
+                sheet.classList.remove('hidden');
+                // Small delay to allow display:flex to take effect before animating transform
+                setTimeout(() => {
+                    sheet.classList.add('visible');
+                    backdrop.classList.remove('opacity-0', 'pointer-events-none');
+                    backdrop.classList.add('opacity-100', 'pointer-events-auto');
+                    document.body.style.overflow = 'hidden'; // Prevent body scrolling
+                }, 10);
+            }
+
+            function closeSheet() {
+                sheet.classList.remove('visible');
+                backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+                backdrop.classList.add('opacity-0', 'pointer-events-none');
+                document.body.style.overflow = ''; // Restore body scrolling
+                
+                // Wait for animation to finish before hiding
+                setTimeout(() => {
+                    sheet.classList.add('hidden');
+                }, 300);
+            }
+
+            connectBtn.addEventListener('click', openSheet);
+            closeBtn.addEventListener('click', closeSheet);
+            backdrop.addEventListener('click', closeSheet);
+        });
+    </script>
+</body></html>
