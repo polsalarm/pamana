@@ -3,7 +3,7 @@
  * Returns an indicative PHP rate for the given crypto amount. Keys stay
  * server-side; the client only ever hits this endpoint.
  */
-import { getRate } from './_pdax'
+import { getRate } from './_pdax.js'
 
 export default async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url)
