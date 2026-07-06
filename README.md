@@ -19,7 +19,9 @@
 
 ---
 
-> 🚧 **Status: In active development** — building to July 15, 2026. Live URLs, deployed contract addresses, and demo videos land as phases complete (see [Build Plan](docs/BUILD_PLAN.md)).
+> 🚧 **Status: In active development** — building to July 15, 2026.
+>
+> **▶ Live (Testnet):** https://pamana-sigma.vercel.app · contracts deployed on Stellar Testnet (factory `CAMKUF…`). Demo videos land as phases complete (see [Build Plan](docs/BUILD_PLAN.md)).
 
 ## 🧩 Problem
 When a Filipino crypto holder dies or becomes incapacitated, their self-custodied assets are lost permanently. There is no seed-phrase recovery, no probate for private keys, no legal mechanism that reaches a wallet the way it freezes a bank account.

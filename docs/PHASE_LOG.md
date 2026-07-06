@@ -18,7 +18,8 @@ Living record of what changed each phase: contract IDs, deploy links, keys (publ
 | Vault wasm hash | `32c5a1599ac5b0eb7e1b014ebe3e28b51f7704891af2a6fb94f5ea0393078f0f` |
 | Factory wasm hash | `4b500598db3ab6ba1ee80dbeadfd8a845ddf83ad7e271ca4c14971ddbc565607` |
 | Token (native XLM SAC, testnet) | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
-| Live app URL | TBD |
+| Live app URL | **https://pamana-sigma.vercel.app** (Vercel, prod) |
+| WalletConnect project | dedicated Pamana Reown project (id in Vercel env, not repo) |
 | soroban-sdk | 22.x · target `wasm32v1-none` · stellar-cli 25.2.0 |
 
 ---
