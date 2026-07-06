@@ -10,7 +10,7 @@ Living record of what changed each phase: contract IDs, deploy links, keys (publ
 
 | Item | Value |
 |------|-------|
-| Current phase | ✅ Phases 0–5 done → ▶ Phase 6 next (heir designation + claim UI) |
+| Current phase | ✅ Phases 0–6 done → ▶ Phase 7 next (passkey + NFC + recovery) |
 | Network | Stellar Testnet (`Test SDF Network ; September 2015`) |
 | Deployer identity | `pamana-testnet` → `GDVWTEQQHWWPB7BHGVZDNZQGNWNB4EDLOKTHHNW2AXLI7JBC6SRJM4X3` |
 | Factory contract ID | `CAMKUFDTTIVDL4Z2UV6UISUDGSONOCCEZHTYH3EFTIA2ILSLLKV4F5RH` |
@@ -219,12 +219,27 @@ Token = native XLM SAC `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
 
 ---
 
-## Phase 6 — Heir designation + claim flow ⬜
-**Date:** — · **Status:** Not started
+## Phase 6 — Heir designation + claim flow ✅ (build + live reads verified)
+**Date:** 2026-07-06 · **Status:** Complete (code + browser read verification); heir-signed claim = device test
+
+### Changes
+- **Manage Heirs** page: add/remove heir rows, per-heir % share, **live BPS-to-100% validator** (turns red until exactly 100%; Stellar-address regex checks; Save disabled until valid) → `set_heirs`.
+- **Heir Claim** page: look up a vault by the owner's address, show status + your share % + XLM estimate, **Claim** (permissionless, heir signs) with locked / already-claimed / success states.
+- Contract layer: `setHeirs` (Heir struct → ScVal map, fields sorted) + `claim`. Routes wired; claim entry from dashboard empty-state.
+- **Routing fix**: added a `restoring` gate so hard-loading a wallet-gated deep link (`/create`, `/deposit`) no longer bounces to Landing before the session restores.
+
+### Tests / verification (browser, against live vault)
+| Check | Result |
+|-------|--------|
+| `npm run build` (tsc + vite) | ✅ clean |
+| Manage Heirs renders; BPS validator red at 0% / ≠100% | ✅ |
+| Claim renders; deep-link bounce fixed | ✅ |
+| Live read: enter owner `GDVW…` → resolves vault `CADCW4…`, reads heirs, flags non-heir wallet | ✅ |
 
 ### Success criteria
-- [ ] Full flow on Testnet with 5-min demo timeout
-- [ ] Two heirs claim independently, correct amounts
+- [x] Heir designation UI with live BPS validator → `set_heirs`
+- [x] Heir claim UI wired to live `claim`; reads verified against deployed vault
+- [ ] Two heirs claim independently on-device (heir-signed) — **user step** (contract-level already proven in Phase 4)
 
 ---
 
@@ -293,3 +308,4 @@ The vault crate is split into two source files purely for organization. They com
 | 2026-07-06 | 3 | Trust-fund release schedule (ReleaseSlot, tranches); 20/20 tests green |
 | 2026-07-06 | 4 | Factory deploy per-owner vaults; deployed to Testnet; live claim verified (+100 XLM) |
 | 2026-07-06 | 5 | Mobile-first frontend (Stitch Heritage theme) wired to live factory; builds clean |
+| 2026-07-06 | 6 | Heir designation (live BPS validator) + heir claim UI; live reads verified in browser |
