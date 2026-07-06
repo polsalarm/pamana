@@ -4,18 +4,24 @@ import {
   getStatus,
   getTimeout,
   getHeartbeat,
+  getTokens,
   getHeirs,
   getVaultBalance,
   type VaultStatus,
   type Heir,
 } from '../contract'
 
+export interface TokenBalance {
+  sac: string
+  balanceStroops: bigint
+}
+
 export interface VaultData {
   vaultId: string | null
   status: VaultStatus | null
   timeout: bigint
   heartbeat: bigint
-  balanceStroops: bigint
+  tokens: TokenBalance[]
   heirs: Heir[]
 }
 
@@ -24,11 +30,11 @@ const EMPTY: VaultData = {
   status: null,
   timeout: 0n,
   heartbeat: 0n,
-  balanceStroops: 0n,
+  tokens: [],
   heirs: [],
 }
 
-/** Loads an owner's vault + its live on-chain state from the deployed factory. */
+/** Loads an owner's vault + its live on-chain state (multi-token). */
 export function useVault(address: string | null) {
   const [data, setData] = useState<VaultData>(EMPTY)
   const [loading, setLoading] = useState(true)
@@ -44,15 +50,20 @@ export function useVault(address: string | null) {
         setData({ ...EMPTY, vaultId: null })
         return
       }
-      const [status, timeout, heartbeat, balanceStroops, heirs] =
-        await Promise.all([
-          getStatus(vaultId, address),
-          getTimeout(vaultId, address),
-          getHeartbeat(vaultId, address),
-          getVaultBalance(vaultId, address),
-          getHeirs(vaultId, address),
-        ])
-      setData({ vaultId, status, timeout, heartbeat, balanceStroops, heirs })
+      const [status, timeout, heartbeat, tokenList, heirs] = await Promise.all([
+        getStatus(vaultId, address),
+        getTimeout(vaultId, address),
+        getHeartbeat(vaultId, address),
+        getTokens(vaultId, address),
+        getHeirs(vaultId, address),
+      ])
+      const tokens: TokenBalance[] = await Promise.all(
+        (tokenList ?? []).map(async (sac) => ({
+          sac,
+          balanceStroops: await getVaultBalance(sac, vaultId, address),
+        })),
+      )
+      setData({ vaultId, status, timeout, heartbeat, tokens, heirs })
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {

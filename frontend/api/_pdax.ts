@@ -96,6 +96,73 @@ export interface RateResult {
   quote: string
 }
 
+/** Flat PHP payout fee per channel (UAT — mirrors the demo pricing). */
+const PAYOUT_FEES: Record<string, number> = { gcash: 15, maya: 15, bank: 25 }
+
+export interface WithdrawResult {
+  /** `submitted` = PDAX accepted the payout; `simulated` = UAT declined
+   *  (mock liquidity/pricing) so we returned a demo reference. */
+  status: 'submitted' | 'simulated'
+  reference: string
+  amountUsdc: number
+  rate: number
+  rateSource: 'live' | 'fallback'
+  php: number
+  fee: number
+  net: number
+  method: string
+}
+
+/** Off-ramp execution (heir, USDC→PHP→cash). Per docs/PDAX_API.md:
+ *  SELL USDC→PHP via /trade then POST /fiat/withdraw to the payout channel.
+ *  UAT OTC is mock and often 500s, so each leg degrades to a simulated receipt
+ *  rather than throwing — the caller always gets a breakdown. */
+export async function withdrawFiat(params: {
+  amount: number
+  method: string
+  destination: string
+}): Promise<WithdrawResult> {
+  const { amount, method, destination } = params
+  const q = await getRate('USDC', 'PHP', amount, 'SELL')
+  const php = +(q.rate * amount).toFixed(2)
+  const fee = PAYOUT_FEES[method] ?? 15
+  const net = +(php - fee).toFixed(2)
+  const base = {
+    amountUsdc: amount,
+    rate: q.rate,
+    rateSource: q.source,
+    php,
+    fee,
+    net,
+    method,
+  }
+
+  try {
+    // Firm quote → execute SELL → fiat payout. Any leg failing (UAT mock)
+    // drops us to the simulated branch below.
+    const quote = await authed<{ id?: string; quote_id?: string }>(
+      'POST',
+      '/trade/quote',
+      { body: { base_currency: 'USDC', quote_currency: 'PHP', base_quantity: amount, side: 'SELL' } },
+    )
+    const quoteId = quote.id ?? quote.quote_id
+    if (quoteId) await authed('POST', '/trade', { body: { quote_id: quoteId } })
+
+    const wd = await authed<{ id?: string; reference?: string }>(
+      'POST',
+      '/fiat/withdraw',
+      { body: { currency: 'PHP', amount: net, channel: method, destination } },
+    )
+    return {
+      status: 'submitted',
+      reference: wd.reference ?? wd.id ?? `PDAX-${Date.now()}`,
+      ...base,
+    }
+  } catch {
+    return { status: 'simulated', reference: `SIM-${Date.now()}`, ...base }
+  }
+}
+
 /** Indicative rate for base→quote. Falls back if the UAT OTC service is down. */
 export async function getRate(
   base: string,

@@ -53,7 +53,6 @@ export function ManageHeirs() {
         rows.map((r) => ({
           addr: r.addr.trim(),
           bps: Math.round(parseFloat(r.pct) * 100),
-          claimed: false,
         })),
       )
       navigate('/dashboard', { replace: true })

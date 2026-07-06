@@ -7,7 +7,6 @@ export type VaultStatus = 'Alive' | 'TimedOut' | 'Distributing'
 export interface Heir {
   addr: string
   bps: number
-  claimed: boolean
 }
 
 // ── Factory ────────────────────────────────────────────────────────────
@@ -23,7 +22,8 @@ export async function getVault(owner: string): Promise<string | null> {
   return res ?? null
 }
 
-/** Deploy a fresh vault for the owner. Returns the new vault address. */
+/** Deploy a fresh vault for the owner. Returns the new vault address.
+ *  Tokens are added per-vault on deposit — none is fixed at creation. */
 export async function createVault(
   owner: string,
   timeoutSeconds: number,
@@ -31,7 +31,7 @@ export async function createVault(
   return writeContract<string>(
     CONFIG.factoryId,
     'create_vault',
-    [addr(owner), addr(CONFIG.tokenId), u64(timeoutSeconds)],
+    [addr(owner), u64(timeoutSeconds)],
     owner,
   )
 }
@@ -50,13 +50,44 @@ export const getTimeout = (vaultId: string, source: string) =>
 export const getHeirs = (vaultId: string, source: string) =>
   readContract<Heir[]>(vaultId, 'get_heirs', [], source)
 
-export const deposit = (vaultId: string, owner: string, stroops: bigint) =>
-  writeContract(vaultId, 'deposit', [i128(stroops)], owner)
+/** Tokens (SAC addresses) this vault currently holds. */
+export const getTokens = (vaultId: string, source: string) =>
+  readContract<string[]>(vaultId, 'get_tokens', [], source)
+
+/** Whether a lump-sum heir has already claimed a given token. */
+export const isClaimed = (
+  vaultId: string,
+  token: string,
+  heirAddr: string,
+  source: string,
+) =>
+  readContract<boolean>(
+    vaultId,
+    'is_claimed',
+    [addr(token), addr(heirAddr)],
+    source,
+  )
+
+export const deposit = (
+  vaultId: string,
+  owner: string,
+  token: string,
+  stroops: bigint,
+) => writeContract(vaultId, 'deposit', [addr(token), i128(stroops)], owner)
+
+/** Owner reclaims `stroops` of `token` from the vault back to their wallet.
+ *  Blocked once distribution has begun (enforced on-chain). */
+export const withdraw = (
+  vaultId: string,
+  owner: string,
+  token: string,
+  stroops: bigint,
+) => writeContract(vaultId, 'withdraw', [addr(token), i128(stroops)], owner)
 
 export const checkIn = (vaultId: string, owner: string) =>
   writeContract(vaultId, 'check_in', [], owner)
 
-/** One Heir struct → ScVal map (fields sorted: addr, bps, claimed). */
+/** One Heir struct → ScVal map (fields sorted: addr, bps). */
 function heirScVal(h: Heir): xdr.ScVal {
   return xdr.ScVal.scvMap([
     new xdr.ScMapEntry({
@@ -66,10 +97,6 @@ function heirScVal(h: Heir): xdr.ScVal {
     new xdr.ScMapEntry({
       key: nativeToScVal('bps', { type: 'symbol' }),
       val: nativeToScVal(h.bps, { type: 'u32' }),
-    }),
-    new xdr.ScMapEntry({
-      key: nativeToScVal('claimed', { type: 'symbol' }),
-      val: xdr.ScVal.scvBool(h.claimed),
     }),
   ])
 }
@@ -83,11 +110,18 @@ export const setHeirs = (vaultId: string, owner: string, heirs: Heir[]) =>
     owner,
   )
 
-/** An heir claims their share. Permissionless; `source` pays the fee (the
- *  heir themselves). */
-export const claim = (vaultId: string, heirAddr: string, source: string) =>
-  writeContract(vaultId, 'claim', [addr(heirAddr)], source)
+/** An heir claims their share of `token`. Permissionless; `source` (the heir)
+ *  pays the fee. */
+export const claim = (
+  vaultId: string,
+  token: string,
+  heirAddr: string,
+  source: string,
+) => writeContract(vaultId, 'claim', [addr(token), addr(heirAddr)], source)
 
-/** Token balance held by the vault, in stroops. */
-export const getVaultBalance = (vaultId: string, source: string) =>
-  readContract<bigint>(CONFIG.tokenId, 'balance', [addr(vaultId)], source)
+/** Balance of `token` held by the vault, in stroops. */
+export const getVaultBalance = (
+  token: string,
+  vaultId: string,
+  source: string,
+) => readContract<bigint>(token, 'balance', [addr(vaultId)], source)

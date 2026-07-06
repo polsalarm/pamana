@@ -4,6 +4,7 @@ import { Landing } from './pages/landing/Landing'
 import { Dashboard } from './pages/owner/Dashboard'
 import { CreateVault } from './pages/owner/CreateVault'
 import { Deposit } from './pages/owner/Deposit'
+import { Withdraw } from './pages/owner/Withdraw'
 import { ManageHeirs } from './pages/owner/ManageHeirs'
 import { Recovery } from './pages/owner/Recovery'
 import { Claim } from './pages/heir/Claim'
@@ -92,7 +93,7 @@ function App() {
         path="/withdraw"
         element={
           <RequireWallet>
-            <Placeholder title="Withdraw" phase="Phase 6" />
+            <Withdraw />
           </RequireWallet>
         }
       />

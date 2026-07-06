@@ -9,20 +9,29 @@ import {
   getVault,
   getStatus,
   getHeirs,
+  getTokens,
   getVaultBalance,
+  isClaimed,
   claim,
   type VaultStatus,
 } from '../../lib/contract'
-import { STROOPS_PER_UNIT } from '../../lib/config'
+import { tokenBySac } from '../../lib/config'
 
 const isStellarAddr = (a: string) => /^G[A-Z2-7]{55}$/.test(a.trim())
+
+interface TokenClaim {
+  sac: string
+  symbol: string
+  estimate: number
+  claimed: boolean
+}
 
 interface Found {
   vaultId: string
   status: VaultStatus
   sharePct: number
-  claimed: boolean
-  estimateXlm: number
+  bps: number
+  tokens: TokenClaim[]
 }
 
 export function Claim() {
@@ -33,8 +42,7 @@ export function Claim() {
   const [loading, setLoading] = useState(false)
   const [found, setFound] = useState<Found | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [claiming, setClaiming] = useState(false)
-  const [done, setDone] = useState(false)
+  const [claimingSac, setClaimingSac] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
 
   const lookup = useCallback(
@@ -46,32 +54,42 @@ export function Claim() {
       setFound(null)
       try {
         const vaultId = await getVault(o)
-      if (!vaultId) {
-        setError('No vault found for that address.')
-        return
+        if (!vaultId) {
+          setError('No vault found for that address.')
+          return
+        }
+        const [status, heirs, tokenList] = await Promise.all([
+          getStatus(vaultId, address),
+          getHeirs(vaultId, address),
+          getTokens(vaultId, address),
+        ])
+        const me = heirs.find((h) => h.addr === address)
+        if (!me) {
+          setError('Your wallet is not listed as an heir of this vault.')
+          return
+        }
+        const tokens: TokenClaim[] = await Promise.all(
+          (tokenList ?? []).map(async (sac) => {
+            const [bal, claimed] = await Promise.all([
+              getVaultBalance(sac, vaultId, address),
+              isClaimed(vaultId, sac, address, address),
+            ])
+            const info = tokenBySac(sac)
+            return {
+              sac,
+              symbol: info.symbol,
+              estimate:
+                (Number(bal) / 10 ** info.decimals) * (me.bps / 10000),
+              claimed,
+            }
+          }),
+        )
+        setFound({ vaultId, status, sharePct: me.bps / 100, bps: me.bps, tokens })
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e))
+      } finally {
+        setLoading(false)
       }
-      const [status, heirs, balance] = await Promise.all([
-        getStatus(vaultId, address),
-        getHeirs(vaultId, address),
-        getVaultBalance(vaultId, address),
-      ])
-      const me = heirs.find((h) => h.addr === address)
-      if (!me) {
-        setError('Your wallet is not listed as an heir of this vault.')
-        return
-      }
-      setFound({
-        vaultId,
-        status,
-        sharePct: me.bps / 100,
-        claimed: me.claimed,
-        estimateXlm: (Number(balance) / STROOPS_PER_UNIT) * (me.bps / 10000),
-      })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setLoading(false)
-    }
     },
     [address, owner],
   )
@@ -99,17 +117,17 @@ export function Claim() {
     }
   }
 
-  async function onClaim() {
+  async function onClaim(sac: string) {
     if (!address || !found) return
-    setClaiming(true)
+    setClaimingSac(sac)
     setError(null)
     try {
-      await claim(found.vaultId, address, address)
-      setDone(true)
+      await claim(found.vaultId, sac, address, address)
+      await lookup(owner) // refresh claimed state
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
-      setClaiming(false)
+      setClaimingSac(null)
     }
   }
 
@@ -132,89 +150,88 @@ export function Claim() {
           </p>
         </div>
 
-        {done ? (
-          <div className="flex flex-col items-center text-center py-10 gap-4">
-            <div className="w-20 h-20 rounded-full bg-primary-container text-on-primary flex items-center justify-center">
-              <Icon name="check" className="text-4xl" />
-            </div>
-            <h3 className="text-2xl font-semibold">Claim complete</h3>
-            <p className="text-on-surface-variant max-w-xs">
-              Your share has been transferred to your wallet.
-            </p>
-            <button
-              onClick={() => navigate('/offramp')}
-              className="mt-2 bg-primary-container text-on-primary h-12 px-6 rounded-full font-semibold uppercase tracking-wider flex items-center gap-2"
-            >
-              Cash out to pesos
-              <Icon name="payments" />
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="flex gap-2">
-              <input
-                value={owner}
-                onChange={(e) => setOwner(e.target.value)}
-                placeholder="Owner Stellar address (G…)"
-                className="flex-grow bg-surface-container-low rounded-lg px-3 py-3 text-sm outline-none"
-              />
-              <button
-                onClick={() => lookup()}
-                disabled={!isStellarAddr(owner) || loading}
-                className="px-4 rounded-lg bg-primary-container text-on-primary font-semibold disabled:opacity-50"
-              >
-                {loading ? '…' : 'Find'}
-              </button>
-            </div>
+        <div className="flex gap-2">
+          <input
+            value={owner}
+            onChange={(e) => setOwner(e.target.value)}
+            placeholder="Owner Stellar address (G…)"
+            className="flex-grow bg-surface-container-low rounded-lg px-3 py-3 text-sm outline-none"
+          />
+          <button
+            onClick={() => lookup()}
+            disabled={!isStellarAddr(owner) || loading}
+            className="px-4 rounded-lg bg-primary-container text-on-primary font-semibold disabled:opacity-50"
+          >
+            {loading ? '…' : 'Find'}
+          </button>
+        </div>
 
-            {nfcSupported() && (
-              <button
-                onClick={onScan}
-                disabled={scanning}
-                className="w-full h-12 rounded-full border border-primary-container/40 text-primary-container font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
-              >
-                <Icon name="contactless" />
-                {scanning ? 'Tap your card…' : 'Tap NFC claim card'}
-              </button>
-            )}
-
-            {found && (
-              <section className="bg-surface-container-lowest rounded-2xl p-6 card-shadow border border-outline-variant/30 flex flex-col items-center text-center gap-3">
-                <StatusLight status={found.status} />
-                <h3 className="text-xl font-semibold">{statusText(found.status)}</h3>
-                <div className="text-on-surface-variant">
-                  Your share: <span className="font-bold text-on-surface">{found.sharePct}%</span>
-                  {' · ≈ '}
-                  <span className="font-bold text-on-surface">
-                    {found.estimateXlm.toLocaleString()} XLM
-                  </span>
-                </div>
-
-                {found.claimed ? (
-                  <p className="text-on-surface-variant text-sm">
-                    You have already claimed your share.
-                  </p>
-                ) : unlocked ? (
-                  <button
-                    onClick={onClaim}
-                    disabled={claiming}
-                    className="w-full h-14 rounded-full bg-primary-container text-on-primary font-semibold uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition disabled:opacity-60 mt-2"
-                  >
-                    {claiming ? 'Claiming…' : 'Claim My Share'}
-                    {!claiming && <Icon name="volunteer_activism" />}
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2 text-on-surface-variant text-sm bg-surface-container-low rounded-lg px-4 py-3 mt-1">
-                    <Icon name="lock" className="text-base" />
-                    Protected — the owner is still active.
-                  </div>
-                )}
-              </section>
-            )}
-
-            {error && <p className="text-error text-sm break-words">{error}</p>}
-          </>
+        {nfcSupported() && (
+          <button
+            onClick={onScan}
+            disabled={scanning}
+            className="w-full h-12 rounded-full border border-primary-container/40 text-primary-container font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            <Icon name="contactless" />
+            {scanning ? 'Tap your card…' : 'Tap NFC claim card'}
+          </button>
         )}
+
+        {found && (
+          <section className="bg-surface-container-lowest rounded-2xl p-6 card-shadow border border-outline-variant/30 flex flex-col items-center text-center gap-3">
+            <StatusLight status={found.status} />
+            <h3 className="text-xl font-semibold">{statusText(found.status)}</h3>
+            <div className="text-on-surface-variant text-sm">
+              Your share: <span className="font-bold text-on-surface">{found.sharePct}%</span>
+            </div>
+
+            {!unlocked ? (
+              <div className="flex items-center gap-2 text-on-surface-variant text-sm bg-surface-container-low rounded-lg px-4 py-3 mt-1">
+                <Icon name="lock" className="text-base" />
+                Protected — the owner is still active.
+              </div>
+            ) : found.tokens.length === 0 ? (
+              <p className="text-on-surface-variant text-sm">This vault holds no tokens.</p>
+            ) : (
+              <div className="w-full flex flex-col gap-2 mt-1">
+                {found.tokens.map((t) => (
+                  <div
+                    key={t.sac}
+                    className="flex items-center justify-between bg-surface-container-low rounded-xl px-4 py-3"
+                  >
+                    <div className="text-left">
+                      <div className="font-semibold">
+                        {t.estimate.toLocaleString()} {t.symbol}
+                      </div>
+                      <div className="text-xs text-on-surface-variant">your share</div>
+                    </div>
+                    {t.claimed ? (
+                      <span className="text-xs text-on-surface-variant flex items-center gap-1">
+                        <Icon name="check" className="text-base" /> Claimed
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => onClaim(t.sac)}
+                        disabled={claimingSac !== null}
+                        className="h-10 px-4 rounded-full bg-primary-container text-on-primary font-semibold text-sm disabled:opacity-60"
+                      >
+                        {claimingSac === t.sac ? 'Claiming…' : 'Claim'}
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  onClick={() => navigate('/offramp')}
+                  className="mt-2 text-primary-container font-semibold text-sm flex items-center justify-center gap-1"
+                >
+                  Cash out to pesos <Icon name="payments" className="text-base" />
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+
+        {error && <p className="text-error text-sm break-words">{error}</p>}
       </div>
     </Layout>
   )

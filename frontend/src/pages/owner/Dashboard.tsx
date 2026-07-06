@@ -6,7 +6,7 @@ import { StatusLight, statusText } from '../../components/StatusLight'
 import { useWallet } from '../../contexts/WalletContext'
 import { useVault } from '../../lib/hooks/useVault'
 import { checkIn } from '../../lib/contract'
-import { STROOPS_PER_UNIT, shortAddr } from '../../lib/config'
+import { shortAddr, tokenBySac } from '../../lib/config'
 
 function daysLeft(heartbeat: bigint, timeout: bigint): number {
   const now = Math.floor(Date.now() / 1000)
@@ -76,7 +76,6 @@ export function Dashboard() {
   }
 
   const days = daysLeft(vault.heartbeat, vault.timeout)
-  const balance = Number(vault.balanceStroops) / STROOPS_PER_UNIT
   const alive = vault.status === 'Alive'
 
   return (
@@ -98,14 +97,29 @@ export function Dashboard() {
         </button>
       </section>
 
-      {/* Balance + quick actions */}
+      {/* Balances (per token) + quick actions */}
       <section className="bg-surface-container-lowest rounded-2xl p-6 card-shadow border border-outline-variant/30">
-        <span className="text-xs uppercase tracking-wider text-on-surface-variant">
-          Pamana Vault
-        </span>
-        <div className="mt-1 mb-5">
-          <div className="text-4xl font-bold">{balance.toLocaleString()} XLM</div>
-          <div className="text-on-surface-variant text-sm">{shortAddr(vault.vaultId, 6)}</div>
+        <div className="flex justify-between items-center">
+          <span className="text-xs uppercase tracking-wider text-on-surface-variant">
+            Pamana Vault
+          </span>
+          <span className="text-xs text-on-surface-variant">{shortAddr(vault.vaultId, 6)}</span>
+        </div>
+        <div className="mt-3 mb-5 flex flex-col gap-2">
+          {vault.tokens.length === 0 ? (
+            <div className="text-2xl font-bold text-on-surface-variant">0 tokens</div>
+          ) : (
+            vault.tokens.map((t) => {
+              const info = tokenBySac(t.sac)
+              const amt = Number(t.balanceStroops) / 10 ** info.decimals
+              return (
+                <div key={t.sac} className="flex items-baseline justify-between">
+                  <span className="text-3xl font-bold">{amt.toLocaleString()}</span>
+                  <span className="text-on-surface-variant font-medium">{info.symbol}</span>
+                </div>
+              )
+            })
+          )}
         </div>
         <div className="grid grid-cols-4 gap-3">
           <QuickAction icon="arrow_downward" label="Deposit" onClick={() => navigate('/deposit')} />

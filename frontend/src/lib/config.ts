@@ -12,10 +12,31 @@ export const CONFIG = {
     import.meta.env.VITE_HORIZON_URL ?? 'https://horizon-testnet.stellar.org',
   factoryId:
     import.meta.env.VITE_FACTORY_CONTRACT_ID ??
-    'CAMKUFDTTIVDL4Z2UV6UISUDGSONOCCEZHTYH3EFTIA2ILSLLKV4F5RH',
-  tokenId:
-    import.meta.env.VITE_TOKEN_SAC_ID ??
-    'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC',
+    'CANQJ6N5BNPYY5CZWGRY7QTZKAY7IAIMSI7RPRNJZP564DROBWOG5PQM',
+}
+
+/** Native XLM Stellar Asset Contract on testnet. */
+export const NATIVE_SAC = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC'
+
+/** Known tokens offered in the deposit picker. A vault can hold ANY Stellar
+ *  asset (SAC / SEP-41) — the "Custom" path lets an owner paste any SAC id. */
+export interface TokenInfo {
+  symbol: string
+  sac: string
+  decimals: number
+}
+export const KNOWN_TOKENS: TokenInfo[] = [
+  { symbol: 'XLM', sac: NATIVE_SAC, decimals: 7 },
+]
+
+export function tokenBySac(sac: string): TokenInfo {
+  return (
+    KNOWN_TOKENS.find((t) => t.sac === sac) ?? {
+      symbol: `${sac.slice(0, 4)}…`,
+      sac,
+      decimals: 7,
+    }
+  )
 }
 
 /** Native XLM (and the test token) uses 7 decimals. */
