@@ -5,6 +5,7 @@ import { Dashboard } from './pages/owner/Dashboard'
 import { CreateVault } from './pages/owner/CreateVault'
 import { Deposit } from './pages/owner/Deposit'
 import { ManageHeirs } from './pages/owner/ManageHeirs'
+import { Recovery } from './pages/owner/Recovery'
 import { Claim } from './pages/heir/Claim'
 import { Placeholder } from './pages/Placeholder'
 import type { ReactNode } from 'react'
@@ -67,6 +68,14 @@ function App() {
         element={
           <RequireWallet>
             <Claim />
+          </RequireWallet>
+        }
+      />
+      <Route
+        path="/recovery"
+        element={
+          <RequireWallet>
+            <Recovery />
           </RequireWallet>
         }
       />

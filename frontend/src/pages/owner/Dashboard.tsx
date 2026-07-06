@@ -151,6 +151,25 @@ export function Dashboard() {
         )}
       </section>
 
+      {/* Social recovery entry */}
+      <button
+        onClick={() => navigate('/recovery')}
+        className="bg-surface-container-lowest rounded-2xl p-4 card-shadow border border-outline-variant/20 flex items-center justify-between hover:opacity-90 transition"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary-container/10 text-primary-container flex items-center justify-center">
+            <Icon name="shield_person" />
+          </div>
+          <div className="text-left">
+            <div className="text-sm font-medium">Social recovery</div>
+            <div className="text-xs text-on-surface-variant">
+              Add guardians to recover a lost device
+            </div>
+          </div>
+        </div>
+        <Icon name="arrow_forward" className="text-on-surface-variant" />
+      </button>
+
       {vault.error && (
         <p className="text-error text-sm text-center">{vault.error}</p>
       )}

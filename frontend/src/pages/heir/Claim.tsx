@@ -1,9 +1,10 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Layout } from '../../components/Layout'
 import { Icon } from '../../components/Icon'
 import { StatusLight, statusText } from '../../components/StatusLight'
 import { useWallet } from '../../contexts/WalletContext'
+import { nfcSupported, readClaimCard } from '../../lib/nfc'
 import {
   getVault,
   getStatus,
@@ -27,20 +28,24 @@ interface Found {
 export function Claim() {
   const { address } = useWallet()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [owner, setOwner] = useState('')
   const [loading, setLoading] = useState(false)
   const [found, setFound] = useState<Found | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [claiming, setClaiming] = useState(false)
   const [done, setDone] = useState(false)
+  const [scanning, setScanning] = useState(false)
 
-  async function lookup() {
-    if (!address || !isStellarAddr(owner)) return
-    setLoading(true)
-    setError(null)
-    setFound(null)
-    try {
-      const vaultId = await getVault(owner.trim())
+  const lookup = useCallback(
+    async (ownerArg?: string) => {
+      const o = (ownerArg ?? owner).trim()
+      if (!address || !isStellarAddr(o)) return
+      setLoading(true)
+      setError(null)
+      setFound(null)
+      try {
+        const vaultId = await getVault(o)
       if (!vaultId) {
         setError('No vault found for that address.')
         return
@@ -66,6 +71,31 @@ export function Claim() {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
       setLoading(false)
+    }
+    },
+    [address, owner],
+  )
+
+  // Deep-link from an NFC card / QR: /claim?owner=G... → auto lookup.
+  useEffect(() => {
+    const qp = searchParams.get('owner')
+    if (qp && isStellarAddr(qp) && address) {
+      setOwner(qp)
+      void lookup(qp)
+    }
+  }, [searchParams, address, lookup])
+
+  async function onScan() {
+    setScanning(true)
+    setError(null)
+    try {
+      const scanned = await readClaimCard()
+      setOwner(scanned)
+      await lookup(scanned)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setScanning(false)
     }
   }
 
@@ -122,13 +152,24 @@ export function Claim() {
                 className="flex-grow bg-surface-container-low rounded-lg px-3 py-3 text-sm outline-none"
               />
               <button
-                onClick={lookup}
+                onClick={() => lookup()}
                 disabled={!isStellarAddr(owner) || loading}
                 className="px-4 rounded-lg bg-primary-container text-on-primary font-semibold disabled:opacity-50"
               >
                 {loading ? '…' : 'Find'}
               </button>
             </div>
+
+            {nfcSupported() && (
+              <button
+                onClick={onScan}
+                disabled={scanning}
+                className="w-full h-12 rounded-full border border-primary-container/40 text-primary-container font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                <Icon name="contactless" />
+                {scanning ? 'Tap your card…' : 'Tap NFC claim card'}
+              </button>
+            )}
 
             {found && (
               <section className="bg-surface-container-lowest rounded-2xl p-6 card-shadow border border-outline-variant/30 flex flex-col items-center text-center gap-3">

@@ -5,6 +5,7 @@ import { Icon } from '../../components/Icon'
 import { useWallet } from '../../contexts/WalletContext'
 import { useVault } from '../../lib/hooks/useVault'
 import { setHeirs } from '../../lib/contract'
+import { nfcSupported, writeClaimCard } from '../../lib/nfc'
 
 interface Row {
   addr: string
@@ -149,7 +150,41 @@ export function ManageHeirs() {
           {busy ? 'Saving…' : 'Save Heirs'}
           {!busy && <Icon name="check" />}
         </button>
+
+        {nfcSupported() && address && (
+          <NfcCardButton owner={address} />
+        )}
       </div>
     </Layout>
+  )
+}
+
+/** Owner programs a physical NFC claim card carrying their address, so a
+ *  non-crypto heir can tap-to-claim (doc §4.4). Android Chrome only. */
+function NfcCardButton({ owner }: { owner: string }) {
+  const [state, setState] = useState<'idle' | 'writing' | 'done' | 'error'>('idle')
+  async function program() {
+    setState('writing')
+    try {
+      await writeClaimCard(owner)
+      setState('done')
+    } catch {
+      setState('error')
+    }
+  }
+  return (
+    <button
+      onClick={program}
+      className="w-full h-12 rounded-full border border-primary-container/40 text-primary-container font-semibold flex items-center justify-center gap-2"
+    >
+      <Icon name="contactless" />
+      {state === 'writing'
+        ? 'Tap a blank card…'
+        : state === 'done'
+          ? 'Card programmed ✓'
+          : state === 'error'
+            ? 'Write failed — try again'
+            : 'Program NFC claim card'}
+    </button>
   )
 }

@@ -88,3 +88,34 @@ export async function writeContract<T = unknown>(
   }
   return (got.returnValue ? scValToNative(got.returnValue) : undefined) as T
 }
+
+/** Submit a classic (non-Soroban) transaction: build → sign → send → poll.
+ *  Used for native multisig `setOptions` in social recovery. */
+export async function submitClassic(
+  ops: xdr.Operation[],
+  source: string,
+): Promise<void> {
+  const account = await server.getAccount(source)
+  const builder = new TransactionBuilder(account, {
+    fee: BASE_FEE,
+    networkPassphrase: CONFIG.networkPassphrase,
+  })
+  for (const op of ops) builder.addOperation(op)
+  const tx = builder.setTimeout(120).build()
+
+  const signedXdr = await signTx(tx.toXDR(), source)
+  const signedTx = TransactionBuilder.fromXDR(signedXdr, CONFIG.networkPassphrase)
+
+  const sent = await server.sendTransaction(signedTx)
+  if (sent.status === 'ERROR') {
+    throw new Error(`submit failed: ${JSON.stringify(sent.errorResult)}`)
+  }
+  let got = await server.getTransaction(sent.hash)
+  for (let i = 0; i < 30 && got.status === 'NOT_FOUND'; i++) {
+    await new Promise((r) => setTimeout(r, 1000))
+    got = await server.getTransaction(sent.hash)
+  }
+  if (got.status !== 'SUCCESS') {
+    throw new Error(`recovery tx did not succeed: ${got.status}`)
+  }
+}

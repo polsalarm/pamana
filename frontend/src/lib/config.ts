@@ -8,6 +8,8 @@ export const CONFIG = {
     import.meta.env.VITE_SOROBAN_RPC_URL ?? 'https://soroban-testnet.stellar.org',
   networkPassphrase:
     import.meta.env.VITE_NETWORK_PASSPHRASE ?? Networks.TESTNET,
+  horizonUrl:
+    import.meta.env.VITE_HORIZON_URL ?? 'https://horizon-testnet.stellar.org',
   factoryId:
     import.meta.env.VITE_FACTORY_CONTRACT_ID ??
     'CAMKUFDTTIVDL4Z2UV6UISUDGSONOCCEZHTYH3EFTIA2ILSLLKV4F5RH',
