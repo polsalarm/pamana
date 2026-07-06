@@ -4,12 +4,15 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { WalletProvider } from './contexts/WalletContext'
+import { DesktopFrame } from './components/DesktopFrame'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <WalletProvider>
-        <App />
+        <DesktopFrame>
+          <App />
+        </DesktopFrame>
       </WalletProvider>
     </BrowserRouter>
   </StrictMode>,
