@@ -10,7 +10,7 @@ Living record of what changed each phase: contract IDs, deploy links, keys (publ
 
 | Item | Value |
 |------|-------|
-| Current phase | ✅ Phases 0–6 done → ▶ Phase 7 next (passkey + NFC + recovery) |
+| Current phase | ✅ Phases 0–7 done → ▶ Phase 8 next (PDAX on/off-ramp) |
 | Network | Stellar Testnet (`Test SDF Network ; September 2015`) |
 | Deployer identity | `pamana-testnet` → `GDVWTEQQHWWPB7BHGVZDNZQGNWNB4EDLOKTHHNW2AXLI7JBC6SRJM4X3` |
 | Factory contract ID | `CAMKUFDTTIVDL4Z2UV6UISUDGSONOCCEZHTYH3EFTIA2ILSLLKV4F5RH` |
@@ -244,13 +244,26 @@ Token = native XLM SAC `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
 
 ---
 
-## Phase 7 — Passkey heir path + NFC + recovery ⬜
-**Date:** — · **Status:** Not started
+## Phase 7 — NFC tap-to-claim + social recovery ✅ (passkey deferred)
+**Date:** 2026-07-06 · **Status:** Complete (code + read paths verified); on-device NFC = Android test
+
+> Scope decision: shipped **NFC + native multisig recovery**; **passkey smart-wallet deferred to roadmap** (needs passkey-kit + a Launchtube submitter — a separate sub-project; heirs still get no-seed-phrase via WalletConnect mobile wallets).
+
+### Changes
+- **NFC (Android Chrome, feature-detected)** — `lib/nfc.ts` reads/writes claim cards holding a `/claim?owner=G…` deep-link. Heir Claim page: *Tap NFC card* button + auto-lookup from `?owner=` query param (tap card → Chrome opens prefilled). Owner *Program NFC card* in Manage Heirs. Desktop/iOS hide the NFC UI (`NDEFReader` absent). Card guide (what to buy/program/tweak) in the NFC appendix below.
+- **Social recovery (§4.3)** — native Stellar multisig via `setOptions`. `lib/recovery.ts`: `getAccountSecurity` (Horizon), `addGuardian` / `removeGuardian` / `setThresholds`; `submitClassic` helper for classic (non-Soroban) txns. Recovery page lists guardians + add/remove; linked from dashboard.
+
+### Tests / verification
+| Check | Result |
+|-------|--------|
+| `npm run build` (tsc + vite) | ✅ clean (code-split; WalletConnect adds weight) |
+| NFC feature-detection hides UI off-Android | ✅ (by design) |
+| Recovery read shape vs live Horizon (`GDVW…` signers/thresholds) | ✅ matches |
 
 ### Success criteria
-- [ ] Heir claims via passkey (no seed phrase)
-- [ ] NFC tap on Android triggers claim
-- [ ] Multisig guardian designation UI (stretch)
+- [x] NFC tap-to-claim wired (deep-link read/write, feature-detected) — on-device Android test pending
+- [x] Multisig guardian designation UI (add/remove/read via native `setOptions`)
+- [~] Passkey — deferred to roadmap (documented)
 
 ---
 
@@ -349,3 +362,4 @@ Heir taps → phone opens Chrome to the claim page, pre-filled with the owner �
 | 2026-07-06 | 4 | Factory deploy per-owner vaults; deployed to Testnet; live claim verified (+100 XLM) |
 | 2026-07-06 | 5 | Mobile-first frontend (Stitch Heritage theme) wired to live factory; builds clean |
 | 2026-07-06 | 6 | Heir designation (live BPS validator) + heir claim UI; live reads verified in browser |
+| 2026-07-06 | 7 | NFC tap-to-claim (feature-detected) + native multisig social recovery; passkey deferred |
