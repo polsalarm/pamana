@@ -10,7 +10,7 @@ Living record of what changed each phase: contract IDs, deploy links, keys (publ
 
 | Item | Value |
 |------|-------|
-| Current phase | ✅ Phases 0–7 done → ▶ Phase 8 next (PDAX on/off-ramp) |
+| Current phase | ✅ Phases 0–8 done → ▶ Phase 9 next (stubs, polish, demo, submission) |
 | Network | Stellar Testnet (`Test SDF Network ; September 2015`) |
 | Deployer identity | `pamana-testnet` → `GDVWTEQQHWWPB7BHGVZDNZQGNWNB4EDLOKTHHNW2AXLI7JBC6SRJM4X3` |
 | Factory contract ID | `CAMKUFDTTIVDL4Z2UV6UISUDGSONOCCEZHTYH3EFTIA2ILSLLKV4F5RH` |
@@ -267,17 +267,30 @@ Token = native XLM SAC `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
 
 ---
 
-## Phase 8 — PDAX on- & off-ramp ⬜
-**Date:** — · **Status:** Not started
+## Phase 8 — PDAX off-ramp (rate + quote) ✅ (live endpoint verified)
+**Date:** 2026-07-06 · **Status:** Off-ramp Layer-1 complete + live; on-ramp + withdrawal execution = next increment
+
+### Changes
+- **First backend**: Vercel serverless functions under `frontend/api/`. `_pdax.ts` = server-side PDAX Institutional API client (login token cache w/ 600s TTL, `access_token`+`id_token` headers, `getRate` with fallback). `pdax-rate.ts` = `GET /api/pdax-rate` proxy (Vercel Node `(req,res)` signature).
+- **Off-ramp UI** (`heir/OffRamp.tsx`): USDC amount → debounced live PHP quote + GCash/Maya/bank payout picker; linked from claim-success + dashboard. `lib/pdax.ts` calls only `/api/*`.
+- **API discovered by UAT probing** → documented in `docs/PDAX_API.md` (base URL, login shape, headers, balances, trade/funding/withdraw endpoints). **No secrets in repo.**
 
 ### Keys / config (public only)
-- _PDAX integration notes, rate fallback, payout methods_
+- PDAX UAT base `https://uat.services.sandbox.pdax.ph/api/pdax-api`; creds in Vercel env (`PDAX_USERNAME/PASSWORD/BASE_URL`) + gitignored `.env.local`. Fallback rate `RAMP_RATE_FALLBACK=58`.
+- UAT `/trade/price` returns 500 (mock OTC down) → endpoint returns `source:"fallback"` at ₱58/USDC. Login + `/balances` verified working (test acct: PHP 100k, USDC 10k, XLM).
+
+### Tests (live)
+| Check | Result |
+|-------|--------|
+| `npm run build` + api tsc | ✅ clean |
+| **Live** `GET /api/pdax-rate?base=USDC&amount=350&side=SELL` | ✅ `{rate:58, source:"fallback", php:20300}` |
+| PDAX login server-side (keys never in client) | ✅ (token cached in function) |
 
 ### Success criteria
-- [ ] Live PHP rate + timestamp both directions
-- [ ] On-ramp funds a vault with USDC from PHP
-- [ ] Off-ramp executes withdrawal
-- [ ] Keys server-side only
+- [x] Live PHP rate + timestamp (off-ramp); keys server-side only
+- [x] Off-ramp quote screen (real PDAX login + graceful fallback)
+- [ ] On-ramp funds a vault with USDC from PHP — next increment
+- [ ] Off-ramp executes withdrawal (fiat/withdraw) — next increment (UAT settlement)
 
 ---
 
@@ -363,3 +376,4 @@ Heir taps → phone opens Chrome to the claim page, pre-filled with the owner �
 | 2026-07-06 | 5 | Mobile-first frontend (Stitch Heritage theme) wired to live factory; builds clean |
 | 2026-07-06 | 6 | Heir designation (live BPS validator) + heir claim UI; live reads verified in browser |
 | 2026-07-06 | 7 | NFC tap-to-claim (feature-detected) + native multisig social recovery; passkey deferred |
+| 2026-07-06 | 8 | PDAX off-ramp: serverless rate proxy + cash-out UI; live endpoint verified (350 USDC → ₱20,300) |
