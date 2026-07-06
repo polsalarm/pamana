@@ -38,8 +38,21 @@ export async function createVault(
 
 // ── Vault ──────────────────────────────────────────────────────────────
 
-export const getStatus = (vaultId: string, source: string) =>
-  readContract<VaultStatus>(vaultId, 'get_status', [], source)
+/** Vault status. Soroban encodes the enum as a single-element vec, so the raw
+ *  value arrives as `['Distributing']`; unwrap it once here so every caller can
+ *  compare against the bare string. */
+export const getStatus = async (
+  vaultId: string,
+  source: string,
+): Promise<VaultStatus> => {
+  const s = await readContract<VaultStatus | VaultStatus[]>(
+    vaultId,
+    'get_status',
+    [],
+    source,
+  )
+  return Array.isArray(s) ? s[0] : s
+}
 
 export const getHeartbeat = (vaultId: string, source: string) =>
   readContract<bigint>(vaultId, 'get_heartbeat', [], source)
