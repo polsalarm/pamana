@@ -36,14 +36,21 @@ Phase 0 build output (skeletons):
 - Secret key lives in `~/.config/stellar/identity/pamana-testnet.toml` — **never committed**.
 - Network passphrase: `Test SDF Network ; September 2015`.
 
-## Deployed contract IDs (Testnet — Phase 4, 2026-07-06)
+## Deployed contract IDs (Testnet — MULTI-TOKEN, 2026-07-06)
+
+Current live deploy after the multi-token rework. **Use these.**
 
 | Contract | Testnet ID | Explorer |
 |----------|-----------|----------|
-| PamanaFactory | `CAMKUFDTTIVDL4Z2UV6UISUDGSONOCCEZHTYH3EFTIA2ILSLLKV4F5RH` | [Stellar Expert →](https://stellar.expert/explorer/testnet/contract/CAMKUFDTTIVDL4Z2UV6UISUDGSONOCCEZHTYH3EFTIA2ILSLLKV4F5RH) |
-| PamanaVault (first, via factory) | `CADCW4D7PHXCWJ4VDEGPMMB37T4UXPKAMOB5XUZM4KGI7JW6QO4AAQQ4` | [Stellar Expert →](https://stellar.expert/explorer/testnet/contract/CADCW4D7PHXCWJ4VDEGPMMB37T4UXPKAMOB5XUZM4KGI7JW6QO4AAQQ4) |
+| PamanaFactory | `CANQJ6N5BNPYY5CZWGRY7QTZKAY7IAIMSI7RPRNJZP564DROBWOG5PQM` | [Stellar Expert →](https://stellar.expert/explorer/testnet/contract/CANQJ6N5BNPYY5CZWGRY7QTZKAY7IAIMSI7RPRNJZP564DROBWOG5PQM) |
+| PamanaVault (first, via factory) | `CDJOXNIY6FMVUBDCDYV3VXWDXVZ323WURQ3VOLSNGH6BTHBMXP7X5LJG` | [Stellar Expert →](https://stellar.expert/explorer/testnet/contract/CDJOXNIY6FMVUBDCDYV3VXWDXVZ323WURQ3VOLSNGH6BTHBMXP7X5LJG) |
 
-**Wasm install hashes:** vault `32c5a1599ac5b0eb7e1b014ebe3e28b51f7704891af2a6fb94f5ea0393078f0f` · factory `4b500598db3ab6ba1ee80dbeadfd8a845ddf83ad7e271ca4c14971ddbc565607`
+**Wasm install hashes:** vault `7fadec9c5c90d8d409f2d2b874f933c39fc8b26f9617d2406eed46799556c423` · factory `603f70b96596e0ff5293ff1568cbfd7cc4fd68c722849cca8db970d26f782eae`
+
+A vault now holds **many tokens** — `create_vault(owner, timeout)` (no token param); tokens register on first `deposit(token, amount)`.
+
+### Superseded (single-token, pre-rework)
+- Factory `CAMKUFDTTIVDL4Z2UV6UISUDGSONOCCEZHTYH3EFTIA2ILSLLKV4F5RH`, vault `CADCW4D7PHXCWJ4VDEGPMMB37T4UXPKAMOB5XUZM4KGI7JW6QO4AAQQ4`. Do not use — old single-token API.
 
 - **Admin / deployer:** `pamana-testnet` → `GDVWTEQQHWWPB7BHGVZDNZQGNWNB4EDLOKTHHNW2AXLI7JBC6SRJM4X3`
 - **Vault token (native XLM SAC, testnet):** `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`
