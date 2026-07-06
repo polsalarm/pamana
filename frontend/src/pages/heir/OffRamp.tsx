@@ -2,27 +2,34 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Layout } from '../../components/Layout'
 import { Icon } from '../../components/Icon'
-import { getRate, type RateQuote } from '../../lib/pdax'
+import { getRate, withdrawToFiat, type RateQuote, type WithdrawReceipt } from '../../lib/pdax'
 
 const PAYOUTS = [
-  { id: 'gcash', label: 'GCash', icon: 'account_balance_wallet' },
-  { id: 'maya', label: 'Maya', icon: 'wallet' },
-  { id: 'bank', label: 'Bank', icon: 'account_balance' },
+  { id: 'gcash', label: 'GCash', icon: 'account_balance_wallet', fee: 15, hint: 'GCash mobile number' },
+  { id: 'maya', label: 'Maya', icon: 'wallet', fee: 15, hint: 'Maya mobile number' },
+  { id: 'bank', label: 'Bank', icon: 'account_balance', fee: 25, hint: 'Bank account number' },
 ]
 
-/** Off-ramp: convert claimed USDC to Philippine pesos via PDAX.
- *  Layer 1 — live indicative rate + quote screen. Execution (withdraw) is the
- *  next increment; keys stay server-side (calls /api/pdax-rate only). */
+/** Off-ramp: convert claimed USDC to Philippine pesos via PDAX. Live indicative
+ *  rate + quote, then execute the payout through /api/pdax-withdraw (keys stay
+ *  server-side). UAT OTC is mock, so a payout may come back `simulated`. */
 export function OffRamp() {
   const navigate = useNavigate()
   const [amount, setAmount] = useState('100')
   const [quote, setQuote] = useState<RateQuote | null>(null)
   const [loading, setLoading] = useState(false)
   const [payout, setPayout] = useState('gcash')
+  const [destination, setDestination] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [receipt, setReceipt] = useState<WithdrawReceipt | null>(null)
 
   const value = parseFloat(amount)
   const valid = !isNaN(value) && value > 0
+  const method = PAYOUTS.find((p) => p.id === payout)!
+  const fee = method.fee
+  const total = quote ? +(quote.php - fee).toFixed(2) : 0
+  const canSubmit = valid && !!quote && destination.trim().length > 0 && !busy
 
   useEffect(() => {
     if (!valid) {
@@ -47,6 +54,65 @@ export function OffRamp() {
       clearTimeout(t)
     }
   }, [value, valid])
+
+  async function onWithdraw() {
+    if (!canSubmit) return
+    setBusy(true)
+    setError(null)
+    try {
+      const r = await withdrawToFiat(value, payout, destination.trim())
+      setReceipt(r)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // ── Success / receipt screen ──────────────────────────────────────────
+  if (receipt) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center text-center gap-5 pt-10">
+          <div className="w-20 h-20 rounded-full bg-primary-container/10 text-primary-container flex items-center justify-center">
+            <Icon name="check_circle" className="text-5xl" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-semibold">
+              {receipt.status === 'submitted' ? 'Cash-out sent' : 'Cash-out queued'}
+            </h2>
+            <p className="text-on-surface-variant mt-1">
+              ₱{receipt.net.toLocaleString()} to {method.label}
+            </p>
+          </div>
+
+          <section className="w-full bg-surface-container-lowest rounded-2xl p-5 card-shadow border border-outline-variant/30 flex flex-col gap-2 text-sm text-left">
+            <Row label="Sold" value={`${receipt.amountUsdc} USDC`} />
+            <Row label="Rate" value={`₱${receipt.rate.toFixed(2)} / USDC`} />
+            <Row label="Gross" value={`₱${receipt.php.toLocaleString()}`} />
+            <Row label="Fee" value={`-₱${receipt.fee}`} />
+            <hr className="border-outline-variant/40 my-1" />
+            <Row label="You receive" value={`₱${receipt.net.toLocaleString()}`} bold />
+            <Row label="Reference" value={receipt.reference} mono />
+          </section>
+
+          {receipt.status === 'simulated' && (
+            <p className="text-xs text-secondary bg-secondary-container/15 rounded-lg px-3 py-2">
+              Simulated payout — PDAX UAT OTC is mock, so no live PHP moved. The
+              rate and flow are real.
+            </p>
+          )}
+
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="w-full h-14 rounded-full bg-primary-container text-on-primary font-semibold uppercase tracking-wider card-shadow"
+          >
+            Done
+          </button>
+        </div>
+      </Layout>
+    )
+  }
 
   return (
     <Layout>
@@ -87,7 +153,7 @@ export function OffRamp() {
           ) : quote ? (
             <>
               <div className="flex justify-between items-baseline">
-                <span className="text-on-surface-variant text-sm">You receive</span>
+                <span className="text-on-surface-variant text-sm">Gross</span>
                 <span className="text-3xl font-bold text-primary-container">
                   ₱{quote.php.toLocaleString()}
                 </span>
@@ -135,20 +201,73 @@ export function OffRamp() {
           </div>
         </section>
 
+        {/* Destination account */}
+        <section className="flex flex-col gap-2">
+          <label className="text-xs uppercase tracking-wider text-on-surface-variant px-1">
+            {method.hint}
+          </label>
+          <input
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
+            placeholder={method.hint}
+            className="bg-surface-container-lowest rounded-xl px-4 h-12 outline-none border border-outline-variant/30 card-shadow"
+          />
+        </section>
+
+        {/* Summary breakdown */}
+        {quote && (
+          <section className="bg-surface-container-low rounded-2xl p-5 flex flex-col gap-2 text-sm">
+            <Row label="Amount to receive" value={`₱${quote.php.toLocaleString()}`} />
+            <Row label={`${method.label} fee`} value={`-₱${fee}`} muted />
+            <hr className="border-outline-variant/40 my-1" />
+            <Row label="Total payout" value={`₱${total.toLocaleString()}`} bold />
+          </section>
+        )}
+
         {error && <p className="text-error text-sm break-words">{error}</p>}
 
         <button
-          disabled={!valid || !quote}
+          onClick={onWithdraw}
+          disabled={!canSubmit}
           className="w-full h-14 rounded-full bg-primary-container text-on-primary font-semibold uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50 card-shadow"
         >
-          Withdraw ₱{quote?.php.toLocaleString() ?? '0'}
-          <Icon name="south" />
+          {busy ? 'Sending…' : `Withdraw ₱${total.toLocaleString()}`}
+          {!busy && <Icon name="south" />}
         </button>
         <p className="text-xs text-on-surface-variant text-center -mt-2">
-          Live withdrawal wiring lands next — rate is a real PDAX quote (or
-          indicative fallback while UAT pricing is down).
+          Rate is a real PDAX quote (indicative fallback while UAT pricing is
+          down). Payout runs against PDAX UAT.
         </p>
       </div>
     </Layout>
+  )
+}
+
+function Row({
+  label,
+  value,
+  bold,
+  muted,
+  mono,
+}: {
+  label: string
+  value: string
+  bold?: boolean
+  muted?: boolean
+  mono?: boolean
+}) {
+  return (
+    <div className="flex justify-between items-center">
+      <span className={muted ? 'text-on-surface-variant' : 'text-on-surface'}>
+        {label}
+      </span>
+      <span
+        className={`${bold ? 'font-bold text-primary-container' : ''} ${
+          mono ? 'font-mono text-xs' : ''
+        }`}
+      >
+        {value}
+      </span>
+    </div>
   )
 }
