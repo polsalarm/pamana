@@ -408,3 +408,4 @@ Heir taps → phone opens Chrome to the claim page, pre-filled with the owner �
 | 2026-07-06 | 8 | PDAX off-ramp: serverless rate proxy + cash-out UI; live endpoint verified (350 USDC → ₱20,300) |
 | 2026-07-06 | 8+ | Off-ramp execution UI (payout + receipt via /api/pdax-withdraw, simulated on UAT decline) |
 | 2026-07-06 | ★ | **Multi-token rework** — vaults hold many tokens per vault; contract + factory redeployed; 28 tests; frontend token pickers; live deposit verified |
+| 2026-07-06 | fix | `getStatus` normalizes the Soroban enum-vec (`['Distributing']`→string) so app-wide status checks work (StatusLight, Dashboard countdown, Claim gating, Withdraw lock); withdraw + cash-out flows browser-verified |
