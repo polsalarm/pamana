@@ -10,7 +10,7 @@ Living record of what changed each phase: contract IDs, deploy links, keys (publ
 
 | Item | Value |
 |------|-------|
-| Current phase | ✅ Phases 0–9 done — build complete; demo video + pitch deck = user deliverables |
+| Current phase | Phases 0-9 done - build complete; narrated backup video + pitch deck draft in repo |
 | Network | Stellar Testnet (`Test SDF Network ; September 2015`) |
 | Deployer identity | `pamana-testnet` → `GDVWTEQQHWWPB7BHGVZDNZQGNWNB4EDLOKTHHNW2AXLI7JBC6SRJM4X3` |
 | Factory contract ID (multi-token) | `CANQJ6N5BNPYY5CZWGRY7QTZKAY7IAIMSI7RPRNJZP564DROBWOG5PQM` |
@@ -301,13 +301,15 @@ Token = native XLM SAC `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
 - **RoadmapCards** component on the dashboard: Sentinel "Protected" status light + mock RWA property card (₱2.4M Quezon City lot), both labeled **Roadmap** (doc §4.7 — honest vision, not shipped).
 - **`docs/DEMO_SCRIPT.md`** — ≤4-min stage script (doc §7 adapted to live features), with cut list + honest roadmap notes + the mic-drop.
 - **`docs/SUBMISSION.md`** — form answers (track, problem, solution, Stellar integration, why-Stellar, what's-built, roadmap, links) from doc §2 + the live build.
+- **`docs/PITCH_DECK.md`** - 10-slide pitch deck draft covering problem, solution, Stellar integration, live demo, roadmap, and close.
+- **`docs/DEMO_RECORDING_CHECKLIST.md`** - backup-video preflight, shot list, narration beats, and export checklist.
 - **Polish**: fixed stale factory id in README status banner + `.env.example` (now the multi-token factory `CANQJ6N5…`); live app URL in README demo table.
 
 ### Deliverables
 - [x] RWA card + Sentinel light stubs (roadmap-labeled)
 - [x] Demo script ≤4 min (`DEMO_SCRIPT.md`)
-- [ ] Backup demo **video** — user records
-- [ ] **Pitch deck** — user makes
+- [x] Backup demo **video** - narrated phone-frame MP4 captured from the actual React app at `assets/video/pamana-demo-backup-2026-07-07.mp4`; upload URL still needed for submission
+- [x] **Pitch deck draft** - `PITCH_DECK.md`
 - [x] Submission answers drafted (`SUBMISSION.md`)
 - [x] Live app URL + contract links in README + Quick reference
 
@@ -419,3 +421,4 @@ Heir taps → phone opens Chrome to the claim page, pre-filled with the owner �
 | 2026-07-06 | ★ | **Multi-token rework** — vaults hold many tokens per vault; contract + factory redeployed; 28 tests; frontend token pickers; live deposit verified |
 | 2026-07-06 | 9 | Roadmap stubs (RWA card + Sentinel light) + demo script + submission answers + README polish |
 | 2026-07-06 | fix | `getStatus` normalizes the Soroban enum-vec (`['Distributing']`→string) so app-wide status checks work (StatusLight, Dashboard countdown, Claim gating, Withdraw lock); withdraw + cash-out flows browser-verified |
+| 2026-07-08 | test | Re-ran `cargo test -p pamana-vault` → **22 passed, 0 failed** — reproves the death-and-claim path (claim-before-timeout rejected, check_in resets countdown, post-timeout single/multi-heir payout, snapshot immutable). Matches BUILD_PLAN Appendix A logic proof. |
