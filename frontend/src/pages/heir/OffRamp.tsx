@@ -4,6 +4,7 @@ import { Layout } from '../../components/Layout'
 import { Icon } from '../../components/Icon'
 import { useFeedback } from '../../contexts/FeedbackContext'
 import { getRate, withdrawToFiat, type RateQuote, type WithdrawReceipt } from '../../lib/pdax'
+import { demoCaptureEnabled, demoQuote } from '../../lib/devDemo'
 
 const PAYOUTS = [
   { id: 'gcash', label: 'GCash', icon: 'account_balance_wallet', fee: 15, hint: 'GCash mobile number' },
@@ -17,11 +18,18 @@ const PAYOUTS = [
 export function OffRamp() {
   const navigate = useNavigate()
   const { runTx } = useFeedback()
-  const [amount, setAmount] = useState('100')
-  const [quote, setQuote] = useState<RateQuote | null>(null)
+  const [amount, setAmount] = useState(() => (demoCaptureEnabled() ? '350' : '100'))
+  const [quote, setQuote] = useState<RateQuote | null>(() =>
+    demoCaptureEnabled() ? demoQuote : null,
+  )
   const [loading, setLoading] = useState(false)
   const [payout, setPayout] = useState('gcash')
-  const [destination, setDestination] = useState('')
+  const [destination, setDestination] = useState(() =>
+    demoCaptureEnabled() ? '0917 123 4567' : '',
+  )
+  const [accountName, setAccountName] = useState(() =>
+    demoCaptureEnabled() ? 'Maria Dela Cruz' : '',
+  )
   const [error, setError] = useState<string | null>(null)
   const [receipt, setReceipt] = useState<WithdrawReceipt | null>(null)
 
@@ -30,9 +38,15 @@ export function OffRamp() {
   const method = PAYOUTS.find((p) => p.id === payout)!
   const fee = method.fee
   const total = quote ? +(quote.php - fee).toFixed(2) : 0
-  const canSubmit = valid && !!quote && destination.trim().length > 0
+  const canSubmit =
+    valid && !!quote && destination.trim().length > 0 && accountName.trim().length > 0
 
   useEffect(() => {
+    if (demoCaptureEnabled()) {
+      setQuote({ ...demoQuote, php: value * demoQuote.rate })
+      setLoading(false)
+      return
+    }
     if (!valid) {
       setQuote(null)
       return
@@ -70,7 +84,7 @@ export function OffRamp() {
       pendingTitle: 'Sending your payout…',
       showExplorer: false,
       silentSuccess: true,
-      action: () => withdrawToFiat(value, payout, destination.trim()),
+      action: () => withdrawToFiat(value, payout, destination.trim(), accountName.trim()),
     })
     if (ok && result) setReceipt(result)
   }
@@ -216,6 +230,19 @@ export function OffRamp() {
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
             placeholder={method.hint}
+            className="bg-surface-container-lowest rounded-xl px-4 h-12 outline-none border border-outline-variant/30 card-shadow"
+          />
+        </section>
+
+        {/* Account name — PDAX requires it on every payout. */}
+        <section className="flex flex-col gap-2">
+          <label className="text-xs uppercase tracking-wider text-on-surface-variant px-1">
+            Account name
+          </label>
+          <input
+            value={accountName}
+            onChange={(e) => setAccountName(e.target.value)}
+            placeholder="Name on the account"
             className="bg-surface-container-lowest rounded-xl px-4 h-12 outline-none border border-outline-variant/30 card-shadow"
           />
         </section>

@@ -9,6 +9,8 @@
  * Credentials come from env: PDAX_USERNAME, PDAX_PASSWORD, PDAX_BASE_URL.
  * See docs/PDAX_API.md.
  */
+import { randomUUID } from 'node:crypto'
+
 const BASE =
   process.env.PDAX_BASE_URL ??
   'https://uat.services.sandbox.pdax.ph/api/pdax-api'
@@ -149,30 +151,72 @@ async function fetchPublicRate(base: string, quote: string): Promise<number | nu
 /** Flat PHP payout fee per channel (UAT — mirrors the demo pricing). */
 const PAYOUT_FEES: Record<string, number> = { gcash: 15, maya: 15, bank: 25 }
 
+/** PDAX bank codes per payout channel (docs → Accepted Values → Bank Codes). */
+const BANK_CODES: Record<string, string> = {
+  gcash: 'EWGXCPH',
+  maya: 'EWPAYPH',
+  bank: process.env.PDAX_BANK_CODE ?? 'BAUBPPH', // UnionBank
+}
+
+/** Above this PHP amount BSP travel-rule requires sender address / national id
+ *  / DOB. We don't collect those, so we refuse rather than send a bad request. */
+const TRAVEL_RULE_THRESHOLD_PHP = 50_000
+
+/** Sender identity for the institutional account. Server-side env only — this
+ *  is the *account holder*, not the heir, and must never come from the client. */
+function senderProfile() {
+  return {
+    sender_first_name: process.env.PDAX_SENDER_FIRST_NAME ?? 'Pamana',
+    sender_middle_name: process.env.PDAX_SENDER_MIDDLE_NAME ?? 'n.a.',
+    sender_last_name: process.env.PDAX_SENDER_LAST_NAME ?? 'Vault',
+    sender_country_origin: process.env.PDAX_SENDER_COUNTRY ?? 'Philippines',
+  }
+}
+
+/** "Juan Dela Cruz" → { first: "Juan", last: "Dela Cruz" }. PDAX wants the
+ *  beneficiary's legal names split, but the payout form only asks for the
+ *  account name, so derive them. */
+function splitName(full: string): { first: string; last: string } {
+  const parts = full.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return { first: 'n.a.', last: 'n.a.' }
+  if (parts.length === 1) return { first: parts[0], last: 'n.a.' }
+  return { first: parts[0], last: parts.slice(1).join(' ') }
+}
+
 export interface WithdrawResult {
-  /** `submitted` = PDAX accepted the payout; `simulated` = UAT declined
-   *  (mock liquidity/pricing) so we returned a demo reference. */
+  /** `submitted` = PDAX accepted the payout; `simulated` = a leg failed
+   *  (sandbox settlement, disabled channel, insufficient funds) and we returned
+   *  a demo reference. `failure` says which leg and why. */
   status: 'submitted' | 'simulated'
   reference: string
   amountUsdc: number
   rate: number
   rateSource: 'live' | 'fallback'
+  rateProvider: 'pdax' | 'public' | 'constant'
   php: number
   fee: number
   net: number
   method: string
+  failure?: { leg: 'quote' | 'order' | 'withdraw'; message: string }
 }
 
-/** Off-ramp execution (heir, USDC→PHP→cash). Per docs/PDAX_API.md:
- *  SELL USDC→PHP via /trade then POST /fiat/withdraw to the payout channel.
- *  UAT OTC is mock and often 500s, so each leg degrades to a simulated receipt
- *  rather than throwing — the caller always gets a breakdown. */
+/** Off-ramp execution (heir, USDC→PHP→cash), per docs/PDAX_API.md:
+ *
+ *    POST v2/trade/quote  (firm quote)  → quote_id
+ *    POST v1/trade        (accept quote, executes the SELL)
+ *    POST v1/fiat/withdraw (payout to the heir's e-wallet / bank account)
+ *
+ *  Any leg can fail in the sandbox (settlement is mocked, channels get
+ *  disabled, the account can run dry). Rather than throwing we return a
+ *  `simulated` receipt that names the leg that failed, so the caller can be
+ *  honest about what did and did not reach PDAX. */
 export async function withdrawFiat(params: {
   amount: number
   method: string
   destination: string
+  accountName: string
 }): Promise<WithdrawResult> {
-  const { amount, method, destination } = params
+  const { amount, method, destination, accountName } = params
   const q = await getRate('USDC', 'PHP', amount, 'SELL')
   const php = +(q.rate * amount).toFixed(2)
   const fee = PAYOUT_FEES[method] ?? 15
@@ -181,35 +225,93 @@ export async function withdrawFiat(params: {
     amountUsdc: amount,
     rate: q.rate,
     rateSource: q.source,
+    rateProvider: q.provider,
     php,
     fee,
     net,
     method,
   }
 
+  let leg: 'quote' | 'order' | 'withdraw' = 'quote'
   try {
-    // Firm quote → execute SELL → fiat payout. Any leg failing (UAT mock)
-    // drops us to the simulated branch below.
-    const quote = await authed<{ id?: string; quote_id?: string }>(
+    if (net >= TRAVEL_RULE_THRESHOLD_PHP) {
+      throw new Error(
+        `payouts of PHP ${TRAVEL_RULE_THRESHOLD_PHP}+ require BSP travel-rule data (sender address / national id / dob) which this app does not collect`,
+      )
+    }
+    const bankCode = BANK_CODES[method]
+    if (!bankCode) throw new Error(`unknown payout method "${method}"`)
+
+    // 1. Firm quote (v2 — quote_currency is the crypto, base_currency is PHP).
+    const quote = await authed<{ data?: { quote_id?: string } }>(
       'POST',
       '/trade/quote',
-      { body: { base_currency: 'USDC', quote_currency: 'PHP', base_quantity: amount, side: 'SELL' } },
+      {
+        v: 2,
+        body: {
+          side: 'sell',
+          quote_currency: 'USDC',
+          base_currency: 'PHP',
+          currency: 'USDC',
+          quantity: String(amount),
+        },
+      },
     )
-    const quoteId = quote.id ?? quote.quote_id
-    if (quoteId) await authed('POST', '/trade', { body: { quote_id: quoteId } })
+    const quoteId = quote?.data?.quote_id
+    if (!quoteId) throw new Error('firm quote returned no quote_id')
 
-    const wd = await authed<{ id?: string; reference?: string }>(
+    // 2. Accept the quote — this executes the SELL. `idempotency_id` is
+    //    required and must be a uuid v4; it makes the order safe to retry.
+    leg = 'order'
+    await authed('POST', '/trade', {
+      body: { quote_id: quoteId, side: 'sell', idempotency_id: randomUUID() },
+    })
+
+    // 3. Fiat payout. Field names are exact; there is no `channel`/`destination`.
+    //    NOTE: the SELL above has already settled by now. If this leg fails
+    //    (bad account number, disabled channel) the pesos stay in the PDAX
+    //    account rather than rolling back — `failure.leg` will say `withdraw`.
+    leg = 'withdraw'
+    const beneficiary = splitName(accountName)
+    const wd = await authed<{
+      data?: { identifier?: string; reference_number?: string }
+    }>(
       'POST',
       '/fiat/withdraw',
-      { body: { currency: 'PHP', amount: net, channel: method, destination } },
+      {
+        body: {
+          identifier: randomUUID(),
+          currency: 'PHP',
+          amount: String(net),
+          method: 'PAY-TO-ACCOUNT-REAL-TIME',
+          ...senderProfile(),
+          beneficiary_first_name: beneficiary.first,
+          beneficiary_middle_name: 'n.a.',
+          beneficiary_last_name: beneficiary.last,
+          beneficiary_bank_code: bankCode,
+          beneficiary_account_name: accountName,
+          beneficiary_account_number: destination,
+          purpose: 'Family Support',
+          relationship_of_sender_to_beneficiary: 'Family',
+          source_of_funds: 'Inheritance/Insurance',
+        },
+      },
     )
     return {
       status: 'submitted',
-      reference: wd.reference ?? wd.id ?? `PDAX-${Date.now()}`,
+      reference:
+        wd?.data?.reference_number ?? wd?.data?.identifier ?? `PDAX-${Date.now()}`,
       ...base,
     }
-  } catch {
-    return { status: 'simulated', reference: `SIM-${Date.now()}`, ...base }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    console.error(`[pdax withdrawFiat ${leg}]`, message)
+    return {
+      status: 'simulated',
+      reference: `SIM-${Date.now()}`,
+      failure: { leg, message },
+      ...base,
+    }
   }
 }
 

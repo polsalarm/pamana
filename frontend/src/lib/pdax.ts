@@ -20,23 +20,28 @@ export interface WithdrawReceipt {
   amountUsdc: number
   rate: number
   rateSource: 'live' | 'fallback'
+  rateProvider: 'pdax' | 'public' | 'constant'
   php: number
   fee: number
   net: number
   method: string
+  /** Present when `status === 'simulated'`: which PDAX leg failed, and why. */
+  failure?: { leg: 'quote' | 'order' | 'withdraw'; message: string }
 }
 
 /** Execute a USDC→PHP cash-out to a payout channel. Hits our own endpoint;
- *  PDAX keys stay server-side. */
+ *  PDAX keys stay server-side. `accountName` is the beneficiary's account name,
+ *  which PDAX requires on every payout. */
 export async function withdrawToFiat(
   amount: number,
   method: string,
   destination: string,
+  accountName: string,
 ): Promise<WithdrawReceipt> {
   const res = await fetch('/api/pdax-withdraw', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount, method, destination }),
+    body: JSON.stringify({ amount, method, destination, accountName }),
   })
   if (!res.ok) throw new Error(`withdraw failed (${res.status})`)
   return res.json() as Promise<WithdrawReceipt>

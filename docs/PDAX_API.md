@@ -77,14 +77,29 @@ The rate lives at `data.price` (PHP per 1 unit of crypto), **not** at the top le
 ```
 Note PDAX prices XLM at ~₱7.27 while public spot feeds say ~₱11. For a PDAX off-ramp, **PDAX's number is the correct one to display.**
 
-## Trading (firm quote → order) 📄
+## Trading (firm quote → order) ✅
 ```
 POST /pdax-institution/v2/trade/quote     firm executable quote
-POST /pdax-institution/v1/trade           execute an order from a firm quote
-GET  /pdax-institution/v1/orders/{id}     order details
-GET  /pdax-institution/v1/orders          order list
+POST /pdax-institution/v1/trade           accept a quote — this EXECUTES the trade
+GET  /pdax-institution/v1/orders/{order_id}   order details        📄
+GET  /pdax-institution/v1/orders              order list           📄
 ```
-Paths taken from the docs; not yet exercised against UAT.
+
+**Firm quote** — same param shape as v2 price:
+```jsonc
+POST /v2/trade/quote
+{ "side":"sell", "quote_currency":"USDC", "base_currency":"PHP", "currency":"USDC", "quantity":"3" }
+→ { "data": { "quote_id":"018fa0b8-…", "expires_at":"2024-05-22T14:33:46.111Z", … }, "status":"success" }
+```
+
+**Order** — all three fields are required. Omitting `idempotency_id` gives
+`{"code":400,"message":"\"idempotency_id\" is required"}`.
+```jsonc
+POST /v1/trade
+{ "quote_id":"…", "side":"sell", "idempotency_id":"<uuid v4>" }
+→ { "data": { "order_id":122121, "status":"successful", "base_quantity":3, "price":61.577, … } }
+```
+Verified live: selling 3 USDC moved the sandbox balance `9995 → 9992` and credited PHP.
 
 ---
 
@@ -134,20 +149,33 @@ The checkout URL is **PayMongo sandbox** — it never settles, and PDAX emails a
 
 ## Withdrawals
 
-### Fiat withdraw (cash-out) 📄
+### Fiat withdraw (cash-out) ✅
 ```
 POST /pdax-institution/v1/fiat/withdraw
 ```
 ```
 identifier, currency:"PHP", amount, method,
+beneficiary_first_name, beneficiary_middle_name, beneficiary_last_name,
 beneficiary_bank_code, beneficiary_account_name, beneficiary_account_number,
-sender_* (travel-rule fields as above), purpose, source_of_funds
+sender_first_name, sender_middle_name, sender_last_name, sender_country_origin,
+purpose, relationship_of_sender_to_beneficiary, source_of_funds
+```
+Response is nested under `data`:
+```json
+{ "data": { "identifier":"ABC123", "reference_number":"eyJ0...", "amount":1000,
+            "method":"PAY-TO-ACCOUNT-NON-REAL-TIME", "retry_methods":[ ... ] } }
 ```
 - `method` ∈ `PAY-TO-ACCOUNT-REAL-TIME` (InstaPay) · `PAY-TO-ACCOUNT-NON-REAL-TIME` (PESONet)
-- `beneficiary_bank_code` is a SWIFT-style code, e.g. `BAUBPPH`. Invalid codes 400.
-- Errors: `beneficiary_account_name is required`, `beneficiary_account_number is required`, `beneficiary_bank_code is required`, `Bank code {{code}} is not valid`, `There is insufficient funds in your account.`
+- `beneficiary_bank_code` comes from Accepted Values → Bank Codes: GCash `EWGXCPH`, Maya Wallet `EWPAYPH`, Maya Bank `BAMABPH`, UnionBank `BAUBPPH`. Invalid codes 400.
+- Below PHP 50,000 the sender address / national id / dob fields are **optional**; at or above, at least one of them is required.
+- Enum fields are **case sensitive**: `purpose` ∈ {`Family Support`, `Gift`, …}, `relationship_of_sender_to_beneficiary` ∈ {`Family`, `Myself`, …}, `source_of_funds` ∈ {`Inheritance/Insurance`, `Compensation`, …, `Others: <Free Text>`}.
+- Errors: `beneficiary_account_name is required`, `beneficiary_bank_code is required`, `Bank code {{code}} is not valid`, `There is insufficient funds in your account.`, `Channel gcash_cashin is disabled`.
 
-> ⚠️ There is **no `channel` and no `destination` field.** `api/_pdax.ts` historically sent those; the request 400s and silently degrades to a `simulated` receipt.
+> ⚠️ There is **no `channel` and no `destination` field.**
+
+> ⚠️ **Settlement is asynchronous.** A `200` from `/fiat/withdraw` means *accepted*, not *paid*. The terminal status only appears in `GET /fiat/transactions` as `COMPLETED` or `FAILED`. In UAT a payout may be accepted and then fail. PDAX also deducts its own payout fee (PHP 15 observed on an e-wallet payout) **in addition to** the amount sent.
+
+> ⚠️ **The SELL is not rolled back if the payout fails.** `POST /trade` settles immediately, so a subsequent `/fiat/withdraw` rejection (invalid account number, disabled channel) leaves the proceeds sitting as PHP in the PDAX account. Observed live: a bad Maya account number failed the payout *after* 2 USDC had already been sold. Validate the beneficiary account before executing the order, or be prepared to retry the payout (`retry_methods` in the response).
 
 ### Crypto withdraw ("Crypto Out") 📄
 ```
@@ -158,11 +186,13 @@ POST /pdax-institution/v1/crypto/withdraw
 ```
 Travel-rule data is required at ≥ PHP 50,000 equivalent (BSP).
 
-## Transaction status 📄
+## Transaction status ✅
 ```
-GET /pdax-institution/v1/fiat/transactions
-GET /pdax-institution/v1/crypto/transactions
+GET /pdax-institution/v1/fiat/transactions      → { data: [ { amount, status, method, created_at, ... } ] }
+GET /pdax-institution/v1/crypto/transactions    📄
 ```
+`status` ∈ `COMPLETED` · `FAILED` · (pending states). This is the **only** way to
+learn whether a payout actually settled — the withdraw call itself just accepts it.
 
 ---
 

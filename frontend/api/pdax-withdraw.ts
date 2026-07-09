@@ -1,7 +1,10 @@
 /**
- * POST /api/pdax-withdraw  body: { amount, method, destination }
+ * POST /api/pdax-withdraw  body: { amount, method, destination, accountName }
  * Executes a USDC→PHP off-ramp payout via PDAX. Keys stay server-side; the
  * client only ever hits this endpoint. See docs/PDAX_API.md.
+ *
+ * `accountName` is the beneficiary's bank/e-wallet account name — PDAX requires
+ * it, and derives the beneficiary's legal names from it.
  *
  * Vercel Node runtime signature: (req, res).
  */
@@ -21,6 +24,7 @@ export default async function handler(
   const amount = Number(body.amount)
   const method = String(body.method ?? 'gcash').toLowerCase()
   const destination = String(body.destination ?? '').trim()
+  const accountName = String(body.accountName ?? '').trim()
 
   if (!Number.isFinite(amount) || amount <= 0) {
     res.status(400).json({ error: 'amount must be a positive number' })
@@ -30,9 +34,13 @@ export default async function handler(
     res.status(400).json({ error: 'destination is required' })
     return
   }
+  if (!accountName) {
+    res.status(400).json({ error: 'accountName is required' })
+    return
+  }
 
   try {
-    const receipt = await withdrawFiat({ amount, method, destination })
+    const receipt = await withdrawFiat({ amount, method, destination, accountName })
     res.status(200).json(receipt)
   } catch (e) {
     res
