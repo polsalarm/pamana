@@ -8,7 +8,12 @@ import {
   getAccountSecurity,
   addGuardian,
   removeGuardian,
+  setRecoveryPolicy,
+  recommendedThreshold,
+  guardiansCanRecover,
+  isThresholdUnsafe,
   type Signer,
+  type Thresholds,
 } from '../../lib/recovery'
 import { shortAddr } from '../../lib/config'
 
@@ -19,6 +24,7 @@ export function Recovery() {
   const { runTx } = useFeedback()
   const navigate = useNavigate()
   const [signers, setSigners] = useState<Signer[]>([])
+  const [thresholds, setThresholds] = useState<Thresholds>({ low: 0, med: 0, high: 0 })
   const [loading, setLoading] = useState(true)
   const [guardian, setGuardian] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -30,6 +36,7 @@ export function Recovery() {
     try {
       const sec = await getAccountSecurity(address)
       setSigners(sec.signers)
+      setThresholds(sec.thresholds)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -79,6 +86,26 @@ export function Recovery() {
     if (ok) await load()
   }
 
+  const threshold = recommendedThreshold(guardians.length)
+  const unsafe = isThresholdUnsafe(guardians.length, thresholds)
+  const canRecover = guardiansCanRecover(guardians.length, threshold)
+
+  async function onEnforce() {
+    if (!address) return
+    const { ok } = await runTx({
+      confirm: {
+        title: `Require ${threshold} signatures`,
+        description: `Guardians will each hold weight 1 and every threshold rises to ${threshold}. No single guardian can act alone. You keep weight ${threshold}, so you can still sign by yourself.`,
+        confirmLabel: `Require ${threshold}-of-${guardians.length}`,
+      },
+      pendingTitle: 'Updating account thresholds…',
+      successTitle: 'Multisig enforced',
+      successDescription: `${threshold} of your ${guardians.length} guardians are now needed to recover this account.`,
+      action: () => setRecoveryPolicy(address, threshold),
+    })
+    if (ok) await load()
+  }
+
   return (
     <Layout>
       <div className="flex flex-col gap-5 pt-2">
@@ -96,6 +123,64 @@ export function Recovery() {
             company involved.
           </p>
         </div>
+
+        {!loading && guardians.length > 0 && (
+          <section
+            className={`rounded-2xl p-5 border flex flex-col gap-3 ${
+              unsafe
+                ? 'bg-error-container/15 border-error/40'
+                : 'bg-surface-container-lowest border-outline-variant/30 card-shadow'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Icon
+                name={unsafe ? 'warning' : 'verified_user'}
+                className={unsafe ? 'text-error' : 'text-primary-container'}
+              />
+              <h3 className="font-semibold">
+                {unsafe ? 'Guardians can act alone' : 'Multisig enforced'}
+              </h3>
+            </div>
+
+            {unsafe ? (
+              <p className="text-sm text-on-surface-variant">
+                Your account thresholds are{' '}
+                <b>
+                  {thresholds.low}/{thresholds.med}/{thresholds.high}
+                </b>
+                . Any single guardian can currently sign <b>any</b> transaction on
+                this account — including moving funds or removing you as a signer.
+                Require multiple signatures to fix this.
+              </p>
+            ) : (
+              <p className="text-sm text-on-surface-variant">
+                Thresholds are{' '}
+                <b>
+                  {thresholds.low}/{thresholds.med}/{thresholds.high}
+                </b>
+                . No single guardian can act alone. You can still sign by yourself.
+              </p>
+            )}
+
+            {!canRecover && (
+              <p className="text-xs text-on-surface-variant bg-surface-container-low rounded-lg px-3 py-2">
+                With only {guardians.length} guardian
+                {guardians.length === 1 ? '' : 's'} they cannot reach a threshold of{' '}
+                {threshold} on their own, so they could not recover your account
+                without you. Add at least {threshold} guardians.
+              </p>
+            )}
+
+            {unsafe && (
+              <button
+                onClick={onEnforce}
+                className="h-12 rounded-full bg-primary-container text-on-primary font-semibold uppercase tracking-wider text-sm card-shadow"
+              >
+                Require {threshold} of {guardians.length} signatures
+              </button>
+            )}
+          </section>
+        )}
 
         <section className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold px-1">

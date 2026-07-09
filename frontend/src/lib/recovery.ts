@@ -72,3 +72,59 @@ export async function setThresholds(owner: string, t: Thresholds) {
     owner,
   )
 }
+
+/** Smallest safe threshold for `guardianCount` guardians of weight 1.
+ *
+ *  Must be >= 2, otherwise a single guardian can sign alone. Recovery without
+ *  the owner needs `guardianCount >= threshold`, so one guardian can never be
+ *  both safe and useful — the UI asks for a second. */
+export function recommendedThreshold(guardianCount: number): number {
+  return Math.max(2, Math.ceil(guardianCount / 2))
+}
+
+/** Can the guardians recover the account on their own at this threshold? */
+export function guardiansCanRecover(guardianCount: number, threshold: number) {
+  return guardianCount >= threshold
+}
+
+/** Is the account in the dangerous default state — guardians exist but every
+ *  threshold is 0, so any one of them can unilaterally sign anything? */
+export function isThresholdUnsafe(guardianCount: number, t: Thresholds) {
+  return guardianCount > 0 && (t.low < 2 || t.med < 2 || t.high < 2)
+}
+
+/** Enforce N-of-M multisig on the owner's account.
+ *
+ *  Stellar authorizes an operation when the summed weight of its signatures
+ *  meets the category threshold. Guardians carry weight 1, so:
+ *
+ *    - `threshold` must be >= 2, or one guardian alone satisfies it.
+ *    - the owner's master key gets weight == `threshold`, so the owner can
+ *      still act alone (an inheritance vault owner must not need a co-signer
+ *      to check in).
+ *    - `threshold` guardians together can recover the account without the owner.
+ *
+ *  Applied as a single `setOptions` so weights and thresholds can never drift
+ *  apart across two transactions — a partial apply could lock the owner out.
+ *
+ *  ⚠ Raising `highThreshold` above the owner's own weight would make future
+ *  `setOptions` (including undoing this) impossible without guardians. We never
+ *  do that: master weight always equals the threshold. */
+export async function setRecoveryPolicy(owner: string, threshold: number) {
+  if (threshold < 2) {
+    throw new Error(
+      'threshold must be at least 2 — with 1, a single guardian could sign alone',
+    )
+  }
+  return submitClassic(
+    [
+      Operation.setOptions({
+        masterWeight: threshold,
+        lowThreshold: threshold,
+        medThreshold: threshold,
+        highThreshold: threshold,
+      }),
+    ],
+    owner,
+  )
+}
