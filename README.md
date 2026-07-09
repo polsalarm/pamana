@@ -41,12 +41,12 @@ Make inheritance a property of the asset itself. A Soroban proof-of-life vault e
 - **Informal earners** — sari-sari owners, market vendors, tricycle drivers with no estate-planning access
 
 ## ✨ Features
-- **Trustless Inheritance (Heartbeat)** — Soroban vault holds USDC; owner calls `check_in()` to prove life; if silent past timeout (default 90 days) any heir may `claim()`. No company, no key-share held by anyone
+- **Trustless Inheritance (Heartbeat)** — Soroban vault holds any Stellar asset (XLM, USDC, any SAC / SEP-41); owner calls `check_in()` to prove life; if silent past timeout (default 90 days) any heir may `claim()`. No company, no key-share held by anyone
 - **Multi-Heir BPS Splits** — heirs designated in basis points (sum = 10,000); pull-based, independent claims; `TotalLocked` snapshot on first claim so no heir is shortchanged
-- **Social Recovery** — native Stellar multisig guardians (N-of-M) + SEP-30 recoverysigner; recover a lost key without a seed phrase
-- **NFC Heir Claim Card** — Tapik-style NFC tap on Android; the inheritance address is bound to the card, heir claims with a tap
+- **Social Recovery** *(partial)* — native Stellar multisig guardians added/removed via `setOptions`. Thresholds are **not** yet set, so this is designation, not N-of-M enforcement — see [What is *not* real yet](#️-what-is-not-real-yet)
+- **NFC Heir Claim Card** — Android Chrome tap opens a prefilled claim deep-link stored on the tag. The card is a pointer: it holds no key and signs nothing
 - **Time-Locked Release (Trust Fund)** — scheduled tranches (e.g. 25%/year over 4 years) enforced on-chain; each tranche claims independently
-- **PDAX PHP On/Off-Ramp** — BSP-licensed PHP ⇄ USDC: on-ramp funds a vault with pesos, off-ramp converts an heir's claim to GCash/Maya/bank
+- **PDAX Off-Ramp** — BSP-licensed exchange. Live `v2/trade/price` quotes, a real on-chain XLM deposit into PDAX's Stellar custody address, then `/trade` + `/fiat/withdraw` to GCash/Maya/bank. **On-ramp (cash-in) is not implemented**, and PDAX's sandbox does not credit testnet deposits — see [What is *not* real yet](#️-what-is-not-real-yet)
 - **Claimant Home** — a **My Assets** view reads your wallet's live balances straight from Horizon, so an heir sees exactly what they received after claiming, plus **Cash out / Cash in / Claim** actions and a live **Activity** feed of recent on-chain history. The bottom nav puts the **Vault** front-and-centre as a distinct raised tab.
 - **Transaction feedback** — every on-chain / money action shows a **confirm → live pending → success/error** modal, and confirmed transactions link straight to Stellar Expert so you always know a claim actually settled.
 - **RWA Asset Card** *(roadmap stub)* — mock on-chain real-world asset display
@@ -69,9 +69,9 @@ Every user is the **owner of their own vault**. The factory is a shared "vault p
 - **Frontend:** React 19 + Vite + TypeScript + Tailwind CSS
 - **Blockchain:** Stellar (Soroban smart contracts in Rust `soroban-sdk`, Stellar RPC, SEP-30) — **factory + vault** contracts
 - **Asset:** USDC via Stellar Asset Contract (SAC)
-- **Auth / signing:** Freighter wallet · passkeys / smart accounts (no seed phrase for heirs)
-- **NFC:** NTAG 424 DNA card + Web NFC API (Android)
-- **On/Off-ramp:** PDAX API (PHP ⇄ USDC)
+- **Auth / signing:** Stellar Wallets Kit — Freighter (desktop) · LOBSTR / WalletConnect (Android). Passkey smart accounts are roadmap
+- **NFC:** plain NTAG21x tag + Web NFC API (Android Chrome only)
+- **Off-ramp:** PDAX Institutional API (crypto → PHP). Cash-in not implemented
 - **Off-chain (deferred):** Supabase — heir contacts + check-in reminders, only if wired
 - **Network:** Stellar Testnet
 
@@ -133,6 +133,24 @@ Live on Stellar Testnet (multi-token). See [contract-deployment.md](docs/contrac
 
 Network: Stellar Testnet (`Test SDF Network ; September 2015`). Resets ~quarterly — redeploy + update `.env.local` after each reset.
 
+## ⚖️ What is *not* real yet
+
+The inheritance core is genuinely trustless and fully on-chain. Several things around it are not, and we'd rather say so than let a demo imply otherwise.
+
+**The peso payout cannot complete end-to-end on testnet.** PDAX's UAT sandbox does hand out a *real* Stellar testnet custody address (`GET /crypto/deposit?currency=XLM_TEST` — it resolves on horizon-testnet and 404s on pubnet). The heir's cash-out really does send XLM to it, on-chain, with the required memo. But **PDAX's sandbox never credits testnet deposits**: a confirmed 25 XLM transfer moved the custody balance from `21492.80` → `21517.80` while `GET /balances` stayed flat and `GET /crypto/transactions` stayed empty for 10+ minutes. So the app stops at the deposit leg and links the transfer on Stellar Expert rather than pretending. There is a clearly-badged **"Run payout leg (demo)"** button that exercises the real `/trade` + `/fiat/withdraw` calls against PDAX's *own* balance — it prints a permanent **⚠ DEMO PAYOUT** warning on the receipt. Those pesos are not the heir's inheritance. Closing this needs production PDAX credentials on mainnet.
+
+**Cash-in (PHP → crypto) is not implemented.** The button is labelled *Soon*. `POST /fiat/deposit` exists and is documented in [`docs/PDAX_API.md`](docs/PDAX_API.md), but it requires a full BSP travel-rule payload (both parties' legal names, DOB, national ID, addresses) that this app deliberately does not collect.
+
+**Social recovery is guardian designation only — not N-of-M.** Guardians are added as native Stellar signers via `setOptions`, which works. But `setThresholds` is never called, so account thresholds stay at `0/0/0`. **A guardian added today can unilaterally sign any transaction on the owner's account, including locking the owner out.** Wiring thresholds is a small change and is the top correctness item on the list. SEP-30 recoverysigner is not integrated.
+
+**Passkey / smart-account heir login is deferred.** Heirs use a normal Stellar wallet (WalletConnect on mobile). No seed-phrase-free path ships today.
+
+**The NFC card is a pointer, not a signer.** It stores a claim deep-link on a plain NTAG21x tag. It holds no key and signs nothing; secure-element signing (NTAG 424 DNA) is future work. Android Chrome only — Web NFC does not exist on iOS.
+
+**RWA asset card and Sentinel monitor are static stubs**, labelled *Roadmap* in the UI. They display mock data and are wired to nothing.
+
+**Rate source.** Quotes come from PDAX's live `v2/trade/price` when available, fall back to a public spot feed, and only then to a hardcoded constant. The receipt's `provider` field always says which of the three answered, so a public rate is never presented as a venue rate.
+
 ## 🔭 Roadmap
 Honest about what's vision vs shipped. Today Pamana holds **any Stellar asset** (XLM, USDC, any SAC / SEP-41 token). Beyond that:
 
@@ -148,8 +166,8 @@ Honest about what's vision vs shipped. Today Pamana holds **any Stellar asset** 
 | Item | Link |
 |------|------|
 | 🔗 Live App | [pamana-sigma.vercel.app](https://pamana-sigma.vercel.app) |
-| 🎥 Demo Video | TBD |
-| 🖼️ Pitch Deck | TBD |
+| Demo Video | [Narrated backup video](assets/video/pamana-demo-backup-2026-07-07.mp4) |
+| Pitch Deck | [Pitch deck draft](docs/PITCH_DECK.md) |
 
 The stage demo (doc §7) ends on the mic-drop: kill the backend server live, re-run the heir's claim — it still works. The blockchain is the executor.
 

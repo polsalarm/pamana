@@ -58,6 +58,10 @@ export function OffRamp() {
   )
   const [error, setError] = useState<string | null>(null)
   const [receipt, setReceipt] = useState<WithdrawReceipt | null>(null)
+  /** True when the payout leg was run against PDAX's own exchange balance
+   *  instead of the heir's uncredited deposit. Never silent — it badges the
+   *  receipt, because otherwise this is indistinguishable from a real cash-out. */
+  const [exchangeSideDemo, setExchangeSideDemo] = useState(false)
 
   const value = parseFloat(amount)
   const valid = !isNaN(value) && value > 0
@@ -164,6 +168,29 @@ export function OffRamp() {
     if (ok && result) setReceipt(result)
   }
 
+  /** Deliberate escape hatch. PDAX's sandbox never credits testnet deposits, so
+   *  the peso leg can only be exercised against the exchange's own balance. That
+   *  is a demo, not an inheritance — the receipt says so, permanently. */
+  async function onDemoPayout() {
+    if (!receipt) return
+    const { ok, result } = await runTx<WithdrawReceipt>({
+      confirm: {
+        title: 'Run payout leg (demo)',
+        description: `This sells PDAX's own ${SELL_SYMBOL}, not your deposit — your ${value} ${SELL_SYMBOL} is still uncredited on-chain. It exercises the real /trade and /fiat/withdraw calls so you can see a live peso payout. The receipt will be marked as a demo.`,
+        confirmLabel: 'Run demo payout',
+      },
+      pendingTitle: 'Selling and paying out…',
+      showExplorer: false,
+      silentSuccess: true,
+      action: () =>
+        withdrawToFiat(value, payout, destination.trim(), accountName.trim(), SELL_SYMBOL),
+    })
+    if (ok && result) {
+      setExchangeSideDemo(true)
+      setReceipt({ ...result, depositTxHash: receipt.depositTxHash })
+    }
+  }
+
   // ── Success / receipt screen ──────────────────────────────────────────
   if (receipt) {
     return (
@@ -191,6 +218,14 @@ export function OffRamp() {
             <Row label="Reference" value={receipt.reference} mono />
           </section>
 
+          {exchangeSideDemo && (
+            <p className="text-xs font-semibold text-amber-700 dark:text-amber-500 bg-amber-500/15 border border-amber-500/40 rounded-lg px-3 py-2 text-left">
+              ⚠ DEMO PAYOUT — these pesos came from selling PDAX's own {receipt.asset}.
+              Your {value} {receipt.asset} deposit is on-chain but still uncredited by the
+              exchange. This is not an inheritance payout.
+            </p>
+          )}
+
           {receipt.status === 'simulated' && (
             <p className="text-xs text-secondary bg-secondary-container/15 rounded-lg px-3 py-2 text-left">
               Stopped at the <b>{receipt.failure?.leg ?? 'payout'}</b> step, so no pesos
@@ -210,6 +245,15 @@ export function OffRamp() {
             >
               View the on-chain transfer <Icon name="open_in_new" className="text-base" />
             </a>
+          )}
+
+          {receipt.failure?.leg === 'deposit' && !exchangeSideDemo && (
+            <button
+              onClick={onDemoPayout}
+              className="w-full h-12 rounded-full border border-amber-500/50 text-amber-700 dark:text-amber-500 font-semibold text-sm"
+            >
+              Run payout leg (demo)
+            </button>
           )}
 
           <button
