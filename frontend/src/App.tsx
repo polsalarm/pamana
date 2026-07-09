@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useWallet } from './contexts/WalletContext'
 import { Landing } from './pages/landing/Landing'
 import { Dashboard } from './pages/owner/Dashboard'
+import { Vault } from './pages/owner/Vault'
 import { CreateVault } from './pages/owner/CreateVault'
 import { Deposit } from './pages/owner/Deposit'
 import { Withdraw } from './pages/owner/Withdraw'
@@ -9,6 +10,8 @@ import { ManageHeirs } from './pages/owner/ManageHeirs'
 import { Recovery } from './pages/owner/Recovery'
 import { Claim } from './pages/heir/Claim'
 import { OffRamp } from './pages/heir/OffRamp'
+import { Activity } from './pages/Activity'
+import { Nfc } from './pages/Nfc'
 import { Placeholder } from './pages/Placeholder'
 import type { ReactNode } from 'react'
 
@@ -38,6 +41,14 @@ function App() {
         element={
           <RequireWallet>
             <Dashboard />
+          </RequireWallet>
+        }
+      />
+      <Route
+        path="/vault"
+        element={
+          <RequireWallet>
+            <Vault />
           </RequireWallet>
         }
       />
@@ -98,10 +109,18 @@ function App() {
         }
       />
       <Route
+        path="/nfc"
+        element={
+          <RequireWallet>
+            <Nfc />
+          </RequireWallet>
+        }
+      />
+      <Route
         path="/activity"
         element={
           <RequireWallet>
-            <Placeholder title="Activity" phase="a later phase" />
+            <Activity />
           </RequireWallet>
         }
       />

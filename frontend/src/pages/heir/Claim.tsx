@@ -4,6 +4,7 @@ import { Layout } from '../../components/Layout'
 import { Icon } from '../../components/Icon'
 import { StatusLight, statusText } from '../../components/StatusLight'
 import { useWallet } from '../../contexts/WalletContext'
+import { useFeedback } from '../../contexts/FeedbackContext'
 import { nfcSupported, readClaimCard } from '../../lib/nfc'
 import {
   getVault,
@@ -44,6 +45,7 @@ interface Found {
 
 export function Claim() {
   const { address } = useWallet()
+  const { runTx } = useFeedback()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [owner, setOwner] = useState('')
@@ -130,32 +132,49 @@ export function Claim() {
     }
   }
 
-  async function onClaim(sac: string) {
+  async function onClaim(t: TokenClaim) {
     if (!address || !found) return
-    setClaimingSac(sac)
-    setError(null)
-    try {
-      await claim(found.vaultId, sac, address, address)
-      await lookup(owner) // refresh claimed state
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setClaimingSac(null)
-    }
+    setClaimingSac(t.sac)
+    const { ok } = await runTx({
+      confirm: {
+        title: 'Claim your share',
+        description: (
+          <>
+            <span className="font-semibold text-on-surface">
+              {t.estimate.toLocaleString()} {t.symbol}
+            </span>{' '}
+            will be transferred to your wallet. This can only be done once.
+          </>
+        ),
+        confirmLabel: 'Claim',
+      },
+      pendingTitle: 'Claiming your inheritance…',
+      successTitle: 'Inheritance claimed',
+      successDescription: `Your ${t.symbol} is now in your wallet.`,
+      actionLabel: 'View my wallet',
+      onAction: () => navigate('/dashboard'),
+      action: () => claim(found.vaultId, t.sac, address, address),
+    })
+    setClaimingSac(null)
+    if (ok) await lookup(owner) // refresh claimed state
   }
 
   async function onTrust(t: TokenClaim) {
     if (!address) return
     setClaimingSac(t.sac)
-    setError(null)
-    try {
-      await addTrustline(address, t.asset)
-      await lookup(owner) // refresh trusted state
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setClaimingSac(null)
-    }
+    const { ok } = await runTx({
+      confirm: {
+        title: `Add ${t.symbol} trustline`,
+        description: `Your wallet needs a trustline before it can hold ${t.symbol}. This is a one-time setup.`,
+        confirmLabel: 'Add trustline',
+      },
+      pendingTitle: 'Adding trustline…',
+      successTitle: 'Trustline added',
+      successDescription: `You can now claim your ${t.symbol}.`,
+      action: () => addTrustline(address, t.asset),
+    })
+    setClaimingSac(null)
+    if (ok) await lookup(owner) // refresh trusted state
   }
 
   const unlocked =
@@ -247,7 +266,7 @@ export function Claim() {
                       </button>
                     ) : (
                       <button
-                        onClick={() => onClaim(t.sac)}
+                        onClick={() => onClaim(t)}
                         disabled={claimingSac !== null}
                         className="h-10 px-4 rounded-full bg-primary-container text-on-primary font-semibold text-sm disabled:opacity-60"
                       >

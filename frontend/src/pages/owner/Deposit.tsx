@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Layout } from '../../components/Layout'
 import { Icon } from '../../components/Icon'
 import { useWallet } from '../../contexts/WalletContext'
+import { useFeedback } from '../../contexts/FeedbackContext'
 import { useVault } from '../../lib/hooks/useVault'
 import { deposit } from '../../lib/contract'
 import { allTokens, addUserToken, type TokenInfo } from '../../lib/config'
@@ -13,13 +14,12 @@ const isContractAddr = (a: string) => /^C[A-Z2-7]{55}$/.test(a.trim())
 export function Deposit() {
   const { address } = useWallet()
   const vault = useVault(address)
+  const { runTx } = useFeedback()
   const navigate = useNavigate()
 
   const [tokens, setTokens] = useState<TokenInfo[]>(() => allTokens())
   const [selected, setSelected] = useState(tokens[0])
   const [amount, setAmount] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   // Add-token sub-form.
   const [adding, setAdding] = useState(false)
@@ -61,17 +61,19 @@ export function Deposit() {
 
   async function onDeposit() {
     if (!address || !vault.vaultId || !valid) return
-    setBusy(true)
-    setError(null)
-    try {
-      const stroops = BigInt(Math.round(value * 10 ** selected.decimals))
-      await deposit(vault.vaultId, address, selected.sac, stroops)
-      navigate('/dashboard', { replace: true })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setBusy(false)
-    }
+    const stroops = BigInt(Math.round(value * 10 ** selected.decimals))
+    const { ok } = await runTx({
+      confirm: {
+        title: 'Deposit to vault',
+        description: `Fund your vault with ${value.toLocaleString()} ${selected.symbol}.`,
+        confirmLabel: 'Deposit',
+      },
+      pendingTitle: 'Depositing…',
+      successTitle: 'Deposit complete',
+      successDescription: `${value.toLocaleString()} ${selected.symbol} is now in your vault.`,
+      action: () => deposit(vault.vaultId!, address, selected.sac, stroops),
+    })
+    if (ok) navigate('/dashboard', { replace: true })
   }
 
   return (
@@ -161,15 +163,13 @@ export function Deposit() {
           />
         </section>
 
-        {error && <p className="text-error text-sm break-words">{error}</p>}
-
         <button
           onClick={onDeposit}
-          disabled={busy || !valid}
+          disabled={!valid}
           className="w-full h-14 rounded-full bg-primary-container text-on-primary font-semibold uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60 card-shadow"
         >
-          {busy ? 'Confirming…' : `Deposit ${selected.symbol}`}
-          {!busy && <Icon name="arrow_downward" />}
+          Deposit {selected.symbol}
+          <Icon name="arrow_downward" />
         </button>
       </div>
     </Layout>

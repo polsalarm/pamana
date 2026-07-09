@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { WalletProvider } from './contexts/WalletContext'
+import { FeedbackProvider } from './contexts/FeedbackContext'
 import { DesktopFrame } from './components/DesktopFrame'
 
 createRoot(document.getElementById('root')!).render(
@@ -11,7 +12,9 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <WalletProvider>
         <DesktopFrame>
-          <App />
+          <FeedbackProvider>
+            <App />
+          </FeedbackProvider>
         </DesktopFrame>
       </WalletProvider>
     </BrowserRouter>

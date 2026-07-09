@@ -15,6 +15,19 @@ export const server = new rpc.Server(CONFIG.rpcUrl, {
   allowHttp: CONFIG.rpcUrl.startsWith('http://'),
 })
 
+/** Hash of the most recent successfully-submitted transaction. Set by
+ *  `writeContract` / `submitClassic`; read (and cleared) via `consumeLastTxHash`
+ *  so the UI can link the confirmed tx on a block explorer. Actions are
+ *  serialized behind the status modal, so only one is ever in flight. */
+let lastTxHash: string | null = null
+
+/** Read and clear the last submitted tx hash. */
+export function consumeLastTxHash(): string | null {
+  const h = lastTxHash
+  lastTxHash = null
+  return h
+}
+
 /** Build ScVal args for a contract call. */
 export const addr = (a: string): xdr.ScVal => new Address(a).toScVal()
 export const u64 = (n: number | bigint): xdr.ScVal =>
@@ -86,6 +99,7 @@ export async function writeContract<T = unknown>(
   if (got.status !== 'SUCCESS') {
     throw new Error(`tx ${method} did not succeed: ${got.status}`)
   }
+  lastTxHash = sent.hash
   return (got.returnValue ? scValToNative(got.returnValue) : undefined) as T
 }
 
@@ -118,4 +132,5 @@ export async function submitClassic(
   if (got.status !== 'SUCCESS') {
     throw new Error(`recovery tx did not succeed: ${got.status}`)
   }
+  lastTxHash = sent.hash
 }

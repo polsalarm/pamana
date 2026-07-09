@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Layout } from '../../components/Layout'
 import { Icon } from '../../components/Icon'
 import { useWallet } from '../../contexts/WalletContext'
+import { useFeedback } from '../../contexts/FeedbackContext'
 import {
   getAccountSecurity,
   addGuardian,
@@ -15,11 +16,11 @@ const isStellarAddr = (a: string) => /^G[A-Z2-7]{55}$/.test(a.trim())
 
 export function Recovery() {
   const { address } = useWallet()
+  const { runTx } = useFeedback()
   const navigate = useNavigate()
   const [signers, setSigners] = useState<Signer[]>([])
   const [loading, setLoading] = useState(true)
   const [guardian, setGuardian] = useState('')
-  const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -44,31 +45,38 @@ export function Recovery() {
 
   async function onAdd() {
     if (!address || !isStellarAddr(guardian)) return
-    setBusy(true)
-    setError(null)
-    try {
-      await addGuardian(address, guardian.trim())
+    const g = guardian.trim()
+    const { ok } = await runTx({
+      confirm: {
+        title: 'Add guardian',
+        description: `Add ${shortAddr(g, 6)} as a recovery signer on your account.`,
+        confirmLabel: 'Add guardian',
+      },
+      pendingTitle: 'Adding guardian…',
+      successTitle: 'Guardian added',
+      successDescription: 'They can now help you recover access.',
+      action: () => addGuardian(address, g),
+    })
+    if (ok) {
       setGuardian('')
       await load()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setBusy(false)
     }
   }
 
   async function onRemove(key: string) {
     if (!address) return
-    setBusy(true)
-    setError(null)
-    try {
-      await removeGuardian(address, key)
-      await load()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setBusy(false)
-    }
+    const { ok } = await runTx({
+      confirm: {
+        title: 'Remove guardian',
+        description: `Remove ${shortAddr(key, 6)} as a recovery signer.`,
+        confirmLabel: 'Remove',
+        tone: 'danger',
+      },
+      pendingTitle: 'Removing guardian…',
+      successTitle: 'Guardian removed',
+      action: () => removeGuardian(address, key),
+    })
+    if (ok) await load()
   }
 
   return (
@@ -120,8 +128,7 @@ export function Recovery() {
                 </div>
                 <button
                   onClick={() => onRemove(g.key)}
-                  disabled={busy}
-                  className="w-9 h-9 rounded-lg text-error hover:bg-error-container/40 flex items-center justify-center disabled:opacity-50"
+                  className="w-9 h-9 rounded-lg text-error hover:bg-error-container/40 flex items-center justify-center"
                 >
                   <Icon name="delete" />
                 </button>
@@ -142,11 +149,11 @@ export function Recovery() {
           />
           <button
             onClick={onAdd}
-            disabled={busy || !isStellarAddr(guardian)}
+            disabled={!isStellarAddr(guardian)}
             className="h-12 rounded-full bg-primary-container text-on-primary font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {busy ? 'Confirming…' : 'Add Guardian'}
-            {!busy && <Icon name="add" />}
+            Add Guardian
+            <Icon name="add" />
           </button>
         </section>
 

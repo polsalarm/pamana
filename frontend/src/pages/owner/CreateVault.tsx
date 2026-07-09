@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Layout } from '../../components/Layout'
 import { Icon } from '../../components/Icon'
 import { useWallet } from '../../contexts/WalletContext'
+import { useFeedback } from '../../contexts/FeedbackContext'
 import { createVault } from '../../lib/contract'
 
 const PRESETS = [
@@ -18,24 +19,29 @@ const DEMO_PRESETS = [
 
 export function CreateVault() {
   const { address } = useWallet()
+  const { runTx } = useFeedback()
   const navigate = useNavigate()
   const [seconds, setSeconds] = useState(PRESETS[2].seconds)
   const [demo, setDemo] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+
+  const windowLabel =
+    (demo ? DEMO_PRESETS : PRESETS).find((p) => p.seconds === seconds)?.label ??
+    `${seconds}s`
 
   async function onCreate() {
     if (!address) return
-    setBusy(true)
-    setError(null)
-    try {
-      await createVault(address, seconds)
-      navigate('/dashboard', { replace: true })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setBusy(false)
-    }
+    const { ok } = await runTx({
+      confirm: {
+        title: 'Create your vault',
+        description: `A fresh vault contract will be deployed for your wallet with a ${windowLabel} check-in window.`,
+        confirmLabel: 'Create vault',
+      },
+      pendingTitle: 'Deploying your vault…',
+      successTitle: 'Vault created',
+      successDescription: 'Fund it and add heirs next.',
+      action: () => createVault(address, seconds),
+    })
+    if (ok) navigate('/dashboard', { replace: true })
   }
 
   return (
@@ -107,15 +113,12 @@ export function CreateVault() {
           </p>
         </div>
 
-        {error && <p className="text-error text-sm">{error}</p>}
-
         <button
           onClick={onCreate}
-          disabled={busy}
-          className="w-full h-14 rounded-full bg-primary-container text-on-primary font-semibold uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60 card-shadow"
+          className="w-full h-14 rounded-full bg-primary-container text-on-primary font-semibold uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition card-shadow"
         >
-          {busy ? 'Deploying…' : 'Create My Vault'}
-          {!busy && <Icon name="add_home" fill />}
+          Create My Vault
+          <Icon name="add_home" fill />
         </button>
       </div>
     </Layout>

@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { Layout } from '../../components/Layout'
 import { Icon } from '../../components/Icon'
 import { useWallet } from '../../contexts/WalletContext'
+import { useFeedback } from '../../contexts/FeedbackContext'
 import { useVault } from '../../lib/hooks/useVault'
 import { setHeirs } from '../../lib/contract'
-import { nfcSupported, writeClaimCard } from '../../lib/nfc'
 
 interface Row {
   addr: string
@@ -17,11 +17,10 @@ const isStellarAddr = (a: string) => /^G[A-Z2-7]{55}$/.test(a.trim())
 export function ManageHeirs() {
   const { address } = useWallet()
   const vault = useVault(address)
+  const { runTx } = useFeedback()
   const navigate = useNavigate()
 
   const [rows, setRows] = useState<Row[]>([{ addr: '', pct: '' }])
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   // Seed from existing heirs once loaded.
   useEffect(() => {
@@ -33,7 +32,8 @@ export function ManageHeirs() {
   const total = rows.reduce((s, r) => s + (parseFloat(r.pct) || 0), 0)
   const totalOk = Math.abs(total - 100) < 0.001
   const addrsOk = rows.every((r) => isStellarAddr(r.addr))
-  const canSave = totalOk && addrsOk && !!vault.vaultId && !busy
+  const canSave = totalOk && addrsOk && !!vault.vaultId
+  const noVault = !vault.vaultId && !vault.loading
 
   function update(i: number, patch: Partial<Row>) {
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)))
@@ -44,23 +44,22 @@ export function ManageHeirs() {
 
   async function onSave() {
     if (!address || !vault.vaultId) return
-    setBusy(true)
-    setError(null)
-    try {
-      await setHeirs(
-        vault.vaultId,
-        address,
-        rows.map((r) => ({
-          addr: r.addr.trim(),
-          bps: Math.round(parseFloat(r.pct) * 100),
-        })),
-      )
-      navigate('/dashboard', { replace: true })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setBusy(false)
-    }
+    const heirs = rows.map((r) => ({
+      addr: r.addr.trim(),
+      bps: Math.round(parseFloat(r.pct) * 100),
+    }))
+    const { ok } = await runTx({
+      confirm: {
+        title: 'Save heirs',
+        description: `Set ${heirs.length} heir${heirs.length === 1 ? '' : 's'} for your vault. Shares total ${total.toFixed(0)}%.`,
+        confirmLabel: 'Save heirs',
+      },
+      pendingTitle: 'Saving heirs…',
+      successTitle: 'Heirs saved',
+      successDescription: 'Your inheritance shares are now on-chain.',
+      action: () => setHeirs(vault.vaultId!, address, heirs),
+    })
+    if (ok) navigate('/dashboard', { replace: true })
   }
 
   return (
@@ -79,8 +78,14 @@ export function ManageHeirs() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
-          {rows.map((r, i) => {
+        <div className="relative">
+          <div
+            className={`flex flex-col gap-5 ${
+              noVault ? 'pointer-events-none blur-[2px] opacity-50 select-none' : ''
+            }`}
+          >
+            <div className="flex flex-col gap-3">
+              {rows.map((r, i) => {
             const badAddr = r.addr.length > 0 && !isStellarAddr(r.addr)
             return (
               <div
@@ -136,54 +141,39 @@ export function ManageHeirs() {
           <span className="font-bold text-lg">{total.toFixed(0)}%</span>
         </div>
 
-        {!vault.vaultId && !vault.loading && (
-          <p className="text-error text-sm">Create a vault first.</p>
-        )}
-        {error && <p className="text-error text-sm break-words">{error}</p>}
+            <button
+              onClick={onSave}
+              disabled={!canSave}
+              className="w-full h-14 rounded-full bg-primary-container text-on-primary font-semibold uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition disabled:opacity-50 card-shadow"
+            >
+              Save Heirs
+              <Icon name="check" />
+            </button>
+          </div>
 
-        <button
-          onClick={onSave}
-          disabled={!canSave}
-          className="w-full h-14 rounded-full bg-primary-container text-on-primary font-semibold uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition disabled:opacity-50 card-shadow"
-        >
-          {busy ? 'Saving…' : 'Save Heirs'}
-          {!busy && <Icon name="check" />}
-        </button>
+          {noVault && (
+            <div className="absolute inset-0 flex items-center justify-center p-2">
+              <div className="bg-surface-container-lowest rounded-2xl p-6 card-shadow border border-outline-variant/30 flex flex-col items-center text-center gap-3 max-w-[17rem]">
+                <div className="w-14 h-14 rounded-full bg-primary-container/10 text-primary-container flex items-center justify-center">
+                  <Icon name="lock" className="text-3xl" />
+                </div>
+                <h3 className="text-lg font-semibold">No vault yet</h3>
+                <p className="text-on-surface-variant text-sm">
+                  Create your inheritance vault before you can assign heirs.
+                </p>
+                <button
+                  onClick={() => navigate('/create')}
+                  className="bg-primary-container text-on-primary h-12 px-6 rounded-full font-semibold uppercase tracking-wider hover:opacity-90 active:scale-95 transition card-shadow"
+                >
+                  Create My Vault
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
-        {nfcSupported() && address && (
-          <NfcCardButton owner={address} />
-        )}
       </div>
     </Layout>
   )
 }
 
-/** Owner programs a physical NFC claim card carrying their address, so a
- *  non-crypto heir can tap-to-claim (doc §4.4). Android Chrome only. */
-function NfcCardButton({ owner }: { owner: string }) {
-  const [state, setState] = useState<'idle' | 'writing' | 'done' | 'error'>('idle')
-  async function program() {
-    setState('writing')
-    try {
-      await writeClaimCard(owner)
-      setState('done')
-    } catch {
-      setState('error')
-    }
-  }
-  return (
-    <button
-      onClick={program}
-      className="w-full h-12 rounded-full border border-primary-container/40 text-primary-container font-semibold flex items-center justify-center gap-2"
-    >
-      <Icon name="contactless" />
-      {state === 'writing'
-        ? 'Tap a blank card…'
-        : state === 'done'
-          ? 'Card programmed ✓'
-          : state === 'error'
-            ? 'Write failed — try again'
-            : 'Program NFC claim card'}
-    </button>
-  )
-}

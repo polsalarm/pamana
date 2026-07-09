@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Layout } from '../../components/Layout'
 import { Icon } from '../../components/Icon'
+import { useFeedback } from '../../contexts/FeedbackContext'
 import { getRate, withdrawToFiat, type RateQuote, type WithdrawReceipt } from '../../lib/pdax'
 
 const PAYOUTS = [
@@ -15,13 +16,13 @@ const PAYOUTS = [
  *  server-side). UAT OTC is mock, so a payout may come back `simulated`. */
 export function OffRamp() {
   const navigate = useNavigate()
+  const { runTx } = useFeedback()
   const [amount, setAmount] = useState('100')
   const [quote, setQuote] = useState<RateQuote | null>(null)
   const [loading, setLoading] = useState(false)
   const [payout, setPayout] = useState('gcash')
   const [destination, setDestination] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
   const [receipt, setReceipt] = useState<WithdrawReceipt | null>(null)
 
   const value = parseFloat(amount)
@@ -29,7 +30,7 @@ export function OffRamp() {
   const method = PAYOUTS.find((p) => p.id === payout)!
   const fee = method.fee
   const total = quote ? +(quote.php - fee).toFixed(2) : 0
-  const canSubmit = valid && !!quote && destination.trim().length > 0 && !busy
+  const canSubmit = valid && !!quote && destination.trim().length > 0
 
   useEffect(() => {
     if (!valid) {
@@ -57,16 +58,21 @@ export function OffRamp() {
 
   async function onWithdraw() {
     if (!canSubmit) return
-    setBusy(true)
     setError(null)
-    try {
-      const r = await withdrawToFiat(value, payout, destination.trim())
-      setReceipt(r)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setBusy(false)
-    }
+    // Off-chain (PDAX) — no tx hash. Confirm + pending via the modal, then the
+    // rich receipt screen below is the success surface (silentSuccess).
+    const { ok, result } = await runTx<WithdrawReceipt>({
+      confirm: {
+        title: 'Confirm cash-out',
+        description: `Send ₱${total.toLocaleString()} to your ${method.label} account (${value} USDC at ₱${quote!.rate.toFixed(2)}).`,
+        confirmLabel: `Withdraw ₱${total.toLocaleString()}`,
+      },
+      pendingTitle: 'Sending your payout…',
+      showExplorer: false,
+      silentSuccess: true,
+      action: () => withdrawToFiat(value, payout, destination.trim()),
+    })
+    if (ok && result) setReceipt(result)
   }
 
   // ── Success / receipt screen ──────────────────────────────────────────
@@ -231,8 +237,8 @@ export function OffRamp() {
           disabled={!canSubmit}
           className="w-full h-14 rounded-full bg-primary-container text-on-primary font-semibold uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50 card-shadow"
         >
-          {busy ? 'Sending…' : `Withdraw ₱${total.toLocaleString()}`}
-          {!busy && <Icon name="south" />}
+          Withdraw ₱{total.toLocaleString()}
+          <Icon name="south" />
         </button>
         <p className="text-xs text-on-surface-variant text-center -mt-2">
           Rate is a real PDAX quote (indicative fallback while UAT pricing is

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Layout } from '../../components/Layout'
 import { Icon } from '../../components/Icon'
 import { useWallet } from '../../contexts/WalletContext'
+import { useFeedback } from '../../contexts/FeedbackContext'
 import { useVault } from '../../lib/hooks/useVault'
 import { withdraw } from '../../lib/contract'
 import { tokenBySac } from '../../lib/config'
@@ -13,11 +14,10 @@ import { tokenBySac } from '../../lib/config'
 export function Withdraw() {
   const { address } = useWallet()
   const vault = useVault(address)
+  const { runTx } = useFeedback()
   const navigate = useNavigate()
   const [sac, setSac] = useState<string | null>(null)
   const [amount, setAmount] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   // Default the selection to the first held token once loaded.
   const selectedSac = sac ?? vault.tokens[0]?.sac ?? null
@@ -39,17 +39,19 @@ export function Withdraw() {
 
   async function onWithdraw() {
     if (!address || !vault.vaultId || !selected || !info || !valid) return
-    setBusy(true)
-    setError(null)
-    try {
-      const stroops = BigInt(Math.round(value * 10 ** info.decimals))
-      await withdraw(vault.vaultId, address, selected.sac, stroops)
-      navigate('/dashboard', { replace: true })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setBusy(false)
-    }
+    const stroops = BigInt(Math.round(value * 10 ** info.decimals))
+    const { ok } = await runTx({
+      confirm: {
+        title: 'Withdraw from vault',
+        description: `Move ${value.toLocaleString()} ${info.symbol} from your vault back to your wallet.`,
+        confirmLabel: 'Withdraw',
+      },
+      pendingTitle: 'Withdrawing…',
+      successTitle: 'Withdrawal complete',
+      successDescription: `${value.toLocaleString()} ${info.symbol} is back in your wallet.`,
+      action: () => withdraw(vault.vaultId!, address, selected.sac, stroops),
+    })
+    if (ok) navigate('/dashboard', { replace: true })
   }
 
   return (
@@ -145,15 +147,13 @@ export function Withdraw() {
               )}
             </section>
 
-            {error && <p className="text-error text-sm break-words">{error}</p>}
-
             <button
               onClick={onWithdraw}
-              disabled={busy || !valid}
+              disabled={!valid}
               className="w-full h-14 rounded-full bg-primary-container text-on-primary font-semibold uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60 card-shadow"
             >
-              {busy ? 'Confirming…' : 'Withdraw'}
-              {!busy && <Icon name="arrow_upward" />}
+              Withdraw
+              <Icon name="arrow_upward" />
             </button>
           </>
         )}

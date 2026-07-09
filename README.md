@@ -47,6 +47,8 @@ Make inheritance a property of the asset itself. A Soroban proof-of-life vault e
 - **NFC Heir Claim Card** — Tapik-style NFC tap on Android; the inheritance address is bound to the card, heir claims with a tap
 - **Time-Locked Release (Trust Fund)** — scheduled tranches (e.g. 25%/year over 4 years) enforced on-chain; each tranche claims independently
 - **PDAX PHP On/Off-Ramp** — BSP-licensed PHP ⇄ USDC: on-ramp funds a vault with pesos, off-ramp converts an heir's claim to GCash/Maya/bank
+- **Claimant Home** — a **My Assets** view reads your wallet's live balances straight from Horizon, so an heir sees exactly what they received after claiming, plus **Cash out / Cash in / Claim** actions and a live **Activity** feed of recent on-chain history. The bottom nav puts the **Vault** front-and-centre as a distinct raised tab.
+- **Transaction feedback** — every on-chain / money action shows a **confirm → live pending → success/error** modal, and confirmed transactions link straight to Stellar Expert so you always know a claim actually settled.
 - **RWA Asset Card** *(roadmap stub)* — mock on-chain real-world asset display
 - **Sentinel Monitor** *(roadmap stub)* — 24/7 anomaly-detection status light
 
@@ -59,7 +61,7 @@ Every user is the **owner of their own vault**. The factory is a shared "vault p
 3. **Add heirs** — paste another Stellar address (e.g. a second Freighter wallet, your child's), set their share in basis points (splits allowed). Sign as owner. Heirs don't need to do anything yet.
 4. **Fund** — `deposit` any Stellar asset (XLM, USDC, or add your own token by pasting its contract address). A vault can hold several — heirs inherit their share of each.
 5. **Stay alive** — tap *I'm Alive* (`check_in`) before the timeout to reset the countdown.
-6. **Inheritance fires** — if you go silent past the timeout, an heir connects their wallet and clicks *Claim* → their share lands in their wallet. No company, no court.
+6. **Inheritance fires** — if you go silent past the timeout, an heir taps **Claim** on their Home, connects their wallet and clicks *Claim* → they confirm, watch the live status, and their share lands in their wallet (with a Stellar Expert receipt link). It then shows up in their **My Assets** view, ready to cash out. No company, no court.
 
 > Heir = any Stellar address. The CLI tests sign from the terminal; Freighter just moves the signing into a browser popup — same transactions.
 

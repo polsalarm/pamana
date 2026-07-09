@@ -77,3 +77,9 @@ export const STROOPS_PER_UNIT = 10 ** TOKEN_DECIMALS
 
 export const shortAddr = (a: string, n = 4) =>
   a.length > 2 * n + 3 ? `${a.slice(0, n)}…${a.slice(-n)}` : a
+
+/** Stellar Expert explorer link for a confirmed transaction. */
+export function explorerTxUrl(hash: string): string {
+  const net = CONFIG.network === 'public' ? 'public' : 'testnet'
+  return `https://stellar.expert/explorer/${net}/tx/${hash}`
+}
