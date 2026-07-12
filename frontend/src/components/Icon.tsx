@@ -21,6 +21,7 @@ const demoIcon: Record<string, string> = {
   home: '⌂',
   info: 'i',
   lock: '•',
+  logout: '⏻',
   payments: '₱',
   person: '•',
   person_add: '+',

@@ -6,9 +6,13 @@ import { TiltCard } from '../components/TiltCard'
 import { RwaCard, RoadmapBadge } from '../components/RoadmapCards'
 import { useWallet } from '../contexts/WalletContext'
 import { useFeedback } from '../contexts/FeedbackContext'
+import { useTheme } from '../contexts/ThemeContext'
 import { nfcSupported, writeClaimCard, readClaimCard } from '../lib/nfc'
 import { shortAddr } from '../lib/config'
-import logo from '../assets/logo.svg'
+
+// Served as-is from public/ — reference by root-relative URL, not a module import.
+const CARD_DARK = '/dark.png'
+const CARD_LIGHT = '/light.png'
 
 type CardStatus = 'blank' | 'writing' | 'done'
 
@@ -16,13 +20,18 @@ const programmedKey = (addr: string) => `bequest.cardProgrammed.${addr}`
 
 /** NFC tap-to-claim cards: program a blank tag with your address so a
  *  non-crypto heir can tap to claim. The card starts blank and "fills in" into
- *  the branded card once programmed. Web NFC is Android-Chrome only; a copyable
- *  link is the fallback (and desktop gets a labeled preview of the animation). */
+ *  the branded card once programmed. Web NFC is Android-Chrome only; other
+ *  devices get a labeled preview of the reveal animation instead. */
 export function Nfc() {
   const { address } = useWallet()
   const { toast } = useFeedback()
+  const { theme } = useTheme()
   const navigate = useNavigate()
   const supported = nfcSupported()
+  // The physical card is printed navy-on-white; the on-screen preview should
+  // read the opposite of the surrounding chrome so it never blends into it —
+  // the navy face in light mode, the light face against the dark surface.
+  const lightCard = theme === 'dark'
 
   const [status, setStatus] = useState<CardStatus>(() =>
     typeof localStorage !== 'undefined' &&
@@ -34,7 +43,6 @@ export function Nfc() {
   const [reading, setReading] = useState(false)
 
   if (!address) return null
-  const claimLink = `${window.location.origin}/claim?owner=${address}`
 
   async function program() {
     if (!supported) {
@@ -72,15 +80,6 @@ export function Nfc() {
     }
   }
 
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(claimLink)
-      toast('Claim link copied', 'success')
-    } catch {
-      toast('Could not copy link', 'error')
-    }
-  }
-
   return (
     <Layout>
       <div className="flex flex-col gap-5 pt-2">
@@ -96,37 +95,28 @@ export function Nfc() {
         {status === 'done' ? (
           <div className="animate-[cardReveal_700ms_cubic-bezier(0.2,0.8,0.2,1)_both]">
             <TiltCard
-              cardClassName="w-full aspect-[1.586/1] bg-[#0f172a] text-white overflow-hidden"
+              cardClassName="w-full aspect-[1.586/1] overflow-hidden"
               className="w-full"
               radius="20px"
               behindGlowColor="rgba(37, 99, 235, 0.4)"
               behindGlowSize="60%"
             >
               <div className="relative h-full">
-                {/* road-glow brand graphic */}
-                <div className="absolute right-9 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/90 blur-md pointer-events-none" />
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-white/15 blur-2xl pointer-events-none" />
-                <div className="absolute -right-6 -bottom-6 w-44 h-28 bg-gradient-to-tr from-secondary via-primary to-transparent opacity-70 blur-2xl rotate-[-12deg] pointer-events-none" />
-
-                <div className="relative h-full p-5 flex flex-col justify-between">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <img src={logo} alt="" className="w-7 h-7" />
-                      <div>
-                        <div className="font-bold tracking-wide leading-none">Bequest</div>
-                        <div className="text-[9px] leading-none mt-1">
-                          <span className="text-white/70">Your legacy. </span>
-                          <span className="text-secondary">Their future.</span>
-                        </div>
-                      </div>
-                    </div>
-                    <Icon name="contactless" className="text-3xl text-white/90" />
+                <img
+                  src={lightCard ? CARD_LIGHT : CARD_DARK}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="relative h-full p-5 flex flex-col justify-end">
+                  <div
+                    className={`text-[10px] uppercase tracking-wider ${
+                      lightCard ? 'text-primary-container' : 'text-primary-fixed-dim'
+                    }`}
+                  >
+                    Tap to claim
                   </div>
-                  <div>
-                    <div className="text-[10px] uppercase tracking-wider text-primary-fixed-dim">
-                      Tap to claim
-                    </div>
-                    <div className="font-mono text-lg mt-0.5">{shortAddr(address, 6)}</div>
+                  <div className={`font-mono text-lg mt-0.5 ${lightCard ? 'text-[#0f172a]' : 'text-white'}`}>
+                    {shortAddr(address, 6)}
                   </div>
                 </div>
               </div>
@@ -187,31 +177,11 @@ export function Nfc() {
           <div className="bg-surface-container-low rounded-xl p-4 flex items-start gap-3 text-sm text-on-surface-variant">
             <Icon name="info" className="text-primary-container" />
             <p>
-              Web NFC works on <strong>Android Chrome</strong>. On this device,
-              share the claim link below — or open Bequest on an Android phone to
-              program a real card.
+              Web NFC works on <strong>Android Chrome</strong>. Open Bequest on an
+              Android phone to program a real card.
             </p>
           </div>
         )}
-
-        {/* Link fallback — works everywhere */}
-        <section className="bg-surface-container-lowest rounded-2xl p-4 card-shadow border border-outline-variant/30 flex flex-col gap-2">
-          <span className="text-xs uppercase tracking-wider text-on-surface-variant">
-            Claim link
-          </span>
-          <div className="flex items-center gap-2">
-            <code className="flex-grow text-xs bg-surface-container-low rounded-lg px-3 py-2 break-all">
-              {claimLink}
-            </code>
-            <button
-              onClick={copyLink}
-              className="w-11 h-11 rounded-lg bg-primary-container/10 text-primary-container flex items-center justify-center flex-shrink-0"
-              title="Copy claim link"
-            >
-              <Icon name="content_copy" />
-            </button>
-          </div>
-        </section>
 
         {/* RWA vision */}
         <section className="flex flex-col gap-3">

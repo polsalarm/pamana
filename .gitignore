@@ -34,3 +34,4 @@ qa-artifacts/
 Thumbs.db
 .idea/
 *.log
+.gstack/

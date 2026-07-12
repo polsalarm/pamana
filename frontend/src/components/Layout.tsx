@@ -2,7 +2,6 @@ import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Icon } from './Icon'
 import { useWallet } from '../contexts/WalletContext'
-import { useTheme } from '../contexts/ThemeContext'
 import { shortAddr } from '../lib/config'
 import logo from '../assets/logo.svg'
 
@@ -15,8 +14,7 @@ const navItems = [
 ]
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { address, disconnect } = useWallet()
-  const { theme, toggle } = useTheme()
+  const { address } = useWallet()
 
   return (
     <div className="min-h-dvh bg-surface text-on-surface pb-[92px]">
@@ -26,26 +24,14 @@ export function Layout({ children }: { children: ReactNode }) {
             <img src={logo} alt="Bequest" className="w-8 h-8" />
             <h1 className="text-xl font-bold text-primary">Bequest</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggle}
-              aria-label="Toggle theme"
-              className="w-11 h-11 rounded-full flex items-center justify-center text-on-surface-variant bg-surface-container-low card-shadow"
-            >
-              <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-lg" />
-            </button>
-            {address && (
-              <button
-                onClick={disconnect}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-secondary-container/60 bg-surface-container-low card-shadow"
-              >
-                <span className="w-2 h-2 rounded-full bg-secondary-container" />
-                <span className="text-xs font-medium text-on-surface-variant">
-                  {shortAddr(address)}
-                </span>
-              </button>
-            )}
-          </div>
+          {address && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-secondary-container/60 bg-surface-container-low card-shadow">
+              <span className="w-2 h-2 rounded-full bg-secondary-container" />
+              <span className="text-xs font-medium text-on-surface-variant">
+                {shortAddr(address)}
+              </span>
+            </div>
+          )}
         </div>
       </header>
 

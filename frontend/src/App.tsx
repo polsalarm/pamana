@@ -13,7 +13,7 @@ import { OffRamp } from './pages/heir/OffRamp'
 import { CashIn } from './pages/owner/CashIn'
 import { Activity } from './pages/Activity'
 import { Nfc } from './pages/Nfc'
-import { Placeholder } from './pages/Placeholder'
+import { Settings } from './pages/Settings'
 import type { ReactNode } from 'react'
 
 /** Gate owner routes behind a connected wallet. Waits for the persisted
@@ -137,7 +137,7 @@ function App() {
         path="/settings"
         element={
           <RequireWallet>
-            <Placeholder title="Settings" phase="a later phase" />
+            <Settings />
           </RequireWallet>
         }
       />
