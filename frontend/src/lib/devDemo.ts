@@ -58,6 +58,15 @@ export const demoClaimData = {
   ],
 }
 
+/** Demo RWA attestation (Phase 2) — mirrors the on-chain HOUSE01 attestation
+ *  so demo-capture mode shows the oracle-backed valuation without an RPC call. */
+export const demoAttestation = {
+  valuePhp: 2_400_000n,
+  docHash: 'e57ac339f57c5333a1274592de4789c89e1dd9dbfbd1bf5e99393fad94753c20',
+  appraiser: 'GDOAIKHT3YRNH4ELPS4QZ6BE5ZBCPQT2CCPXS7D33RMI4HJJOAAWP2VK',
+  timestamp: BigInt(Math.floor(Date.now() / 1000)) - 3600n,
+}
+
 export const demoQuote = {
   rate: 58,
   source: 'fallback' as const,

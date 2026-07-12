@@ -888,6 +888,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "pamana-oracle"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "pamana-vault"
 version = "0.1.0"
 dependencies = [

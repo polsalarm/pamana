@@ -13,6 +13,10 @@ export const CONFIG = {
   factoryId:
     import.meta.env.VITE_FACTORY_CONTRACT_ID ??
     'CANQJ6N5BNPYY5CZWGRY7QTZKAY7IAIMSI7RPRNJZP564DROBWOG5PQM',
+  /** RWA valuation oracle (Phase 2) — stores signed appraiser attestations. */
+  oracleId:
+    import.meta.env.VITE_ORACLE_CONTRACT_ID ??
+    'CDBZ4RNSN5235LB2ZOF3UZ3VRHOD2VHFGDTELZI45V4S4IIIOECNLKJS',
 }
 
 /** Native XLM Stellar Asset Contract on testnet. */

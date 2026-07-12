@@ -48,8 +48,9 @@ export function RwaCard() {
         <Icon name="home_work" className="text-3xl text-primary-fixed" />
       </div>
       <p className="relative z-10 text-xs text-primary-fixed-dim mt-3">
-        Inherit property and other real-world assets alongside crypto. Needs a
-        legal + oracle layer — kept honest as roadmap.
+        Inherit property and other real-world assets alongside crypto. Live on
+        testnet with a signed valuation oracle; the legal + custody layer is the
+        remaining roadmap.
       </p>
     </div>
   )

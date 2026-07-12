@@ -6,8 +6,17 @@ import { useWallet } from '../contexts/WalletContext'
 import { useFeedback } from '../contexts/FeedbackContext'
 import { useVault } from '../lib/hooks/useVault'
 import { checkIn } from '../lib/contract'
-import { shortAddr, tokenBySac } from '../lib/config'
+import { shortAddr, tokenBySac, type TokenInfo } from '../lib/config'
 import { enablePushReminders, pushEnabled, pushSupported, notify, notifyOnce } from '../lib/push'
+import { getAttestation, type Attestation } from '../lib/oracle'
+import { demoCaptureEnabled, demoAttestation } from '../lib/devDemo'
+
+function timeAgo(tsSeconds: bigint): string {
+  const secs = Math.max(0, Math.floor(Date.now() / 1000) - Number(tsSeconds))
+  if (secs < 3600) return `${Math.max(1, Math.floor(secs / 60))}m ago`
+  if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`
+  return `${Math.floor(secs / 86400)}d ago`
+}
 
 function daysLeft(heartbeat: bigint, timeout: bigint): number {
   const now = Math.floor(Date.now() / 1000)
@@ -172,14 +181,7 @@ export function VaultPanel() {
                       {info.symbol}
                     </span>
                   </div>
-                  {info.rwa && (
-                    <div className="flex items-baseline justify-between text-xs text-on-surface-variant">
-                      <span>
-                        {info.rwa.label} · ≈ ₱{info.rwa.attestedPhp.toLocaleString()}
-                      </span>
-                      <span className="italic">{info.rwa.docRef}</span>
-                    </div>
-                  )}
+                  {info.rwa && <RwaMeta info={info} source={address} />}
                 </div>
               )
             })
@@ -251,6 +253,47 @@ export function VaultPanel() {
 
       {vault.error && <p className="text-error text-sm text-center">{vault.error}</p>}
     </>
+  )
+}
+
+/** RWA valuation row. Reads the oracle attestation for the token's SAC (Phase
+ *  2) and shows the attested value, how recent it is, and the signing
+ *  appraiser. Falls back to the static config figure if no attestation exists
+ *  or the read fails; uses the demo attestation in demo-capture mode. */
+function RwaMeta({ info, source }: { info: TokenInfo; source: string | null }) {
+  const [att, setAtt] = useState<Attestation | null>(null)
+  const rwa = info.rwa!
+
+  useEffect(() => {
+    let live = true
+    if (demoCaptureEnabled()) {
+      setAtt(demoAttestation)
+      return
+    }
+    if (!source) return
+    getAttestation(info.sac, source).then((a) => {
+      if (live) setAtt(a)
+    })
+    return () => {
+      live = false
+    }
+  }, [info.sac, source])
+
+  const valuePhp = att ? Number(att.valuePhp) : rwa.attestedPhp
+
+  return (
+    <div className="flex items-baseline justify-between text-xs text-on-surface-variant">
+      <span>
+        {rwa.label} · ≈ ₱{valuePhp.toLocaleString()}
+      </span>
+      {att ? (
+        <span title={`doc ${att.docHash.slice(0, 16)}… · appraiser ${att.appraiser}`}>
+          attested {timeAgo(att.timestamp)} · {shortAddr(att.appraiser, 4)}
+        </span>
+      ) : (
+        <span className="italic">{rwa.docRef}</span>
+      )}
+    </div>
   )
 }
 

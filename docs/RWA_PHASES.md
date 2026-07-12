@@ -82,24 +82,38 @@ uses the existing, unchanged claim path.
 
 ---
 
-## Phase 2 — Attested valuation (oracle)
-**Status:** Not started · **Effort:** M · **Dependency:** Phase 1
+## Phase 2 — Attested valuation (oracle) ✅
+**Status:** Done (2026-07-12) · **Effort:** M · **Dependency:** Phase 1
 
-Replace the hardcoded `₱2,400,000` with a signed, on-chain attestation.
+Replaced the hardcoded `₱2,400,000` with a signed, on-chain attestation.
 
 ### Scope
-- **Oracle contract** (Soroban): stores latest `(assetId, value, timestamp)`
-  signed by a licensed appraiser key. Vault/UI reads it instead of a constant.
-- **Doc-hash link:** hash of the signed legal/appraisal doc in issuer account
-  `manage_data` (or a vault event), so the token provably references a specific
-  attested document.
-- Trust model: start single-signer (custodian), design for M-of-N appraiser
-  multisig. RWA valuations are **attested, not streamed** — this is not a DeFi
-  price feed.
+- **Oracle contract** (Soroban `pamana-oracle`): stores the latest
+  `(value_php, doc_hash, appraiser, timestamp)` per asset, keyed by SAC address,
+  written by a registered appraiser. Vault UI reads it instead of a constant.
+- **Doc-hash link:** the attestation carries the sha256 of the signed appraisal
+  doc, binding the on-chain figure to a specific paper
+  (`docs/rwa/HOUSE01-appraisal.md`). (Kept in the attestation record itself
+  rather than a separate issuer `manage_data` entry — single source of truth.)
+- Trust model: single-signer per attestation with an admin-managed appraiser
+  set — structured to grow into an M-of-N appraiser quorum. Attested, not a
+  streamed DeFi price feed.
 
-### Exit criteria
-UI shows a valuation that traces to an on-chain signed attestation + a doc hash;
-stale attestations flagged.
+### Deliverables (as built)
+- `contracts/pamana-oracle/` — contract + 9 unit tests (all green). Functions:
+  `init`, `add_appraiser`, `remove_appraiser`, `attest`, `get_attestation`,
+  `is_appraiser`, `get_admin`, `get_appraisers`.
+- `frontend/src/lib/oracle.ts` — `getAttestation(sac)` read (RPC simulate).
+- `frontend/src/components/VaultPanel.tsx` — `RwaMeta` row: attested value +
+  freshness (`attested 1h ago`) + signing appraiser; falls back to the static
+  figure if no attestation.
+- `frontend/src/lib/devDemo.ts` — demo attestation. `config.ts` — `oracleId`.
+- `docs/rwa/HOUSE01-appraisal.md` — the attested document.
+
+### Exit criteria — met
+Appraiser attested HOUSE01 on testnet; `get_attestation` returns
+value ₱2,400,000 + matching doc hash; vault UI shows the oracle value with
+recency + appraiser, not a constant.
 
 ### Skills / refs
 `soroban` (oracle contract), `data` (RPC reads), `standards`.
