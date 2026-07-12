@@ -56,8 +56,9 @@ truth:
 | **The appraised value** | 🟡 stub | a made-up figure attested to a demo document |
 | **The KYC / identity check** | ❌ **simulated** | `api/kyc` **auto-approves**; no identity is checked, and **no PII is read, stored, or sent** |
 | **Compliance-officer / custodian admin review** | ❌ **not built** | the auto-approve **stands in for it** |
-| Legal binding of token → property | ❌ **not built** | Phase 4; needs an SPV/custodian |
-| Redemption (token → real title transfer) | ❌ **not built** | Phase 4 |
+| Legal binding of token → property | ❌ **not built** | needs a real SPV/custodian |
+| Redemption clawback (token → burned on-chain) | ✅ real | `api/redeem` — classic issuer `clawback` (CAP-35) |
+| **The custodian's "title actually transferred" decision** | ❌ **simulated** | `api/redeem` **auto-approves**; no real paperwork happens |
 
 **In one line:** the *mechanisms* are real and on-chain enforced; the *decisions*
 (who is a valid appraiser, who passes KYC, who legally owns the house) are
@@ -222,24 +223,65 @@ deposit into an unauthorized vault trapped with `"balance is deauthorized"`;
 
 ---
 
-## Phase 4 — Redemption / title handoff
-**Status:** Not started · **Effort:** L · **Dependency:** Phases 1–3; custodian/SPV
+## Phase 4 — Redemption / title handoff ✅ *(mechanism; custodian simulated)*
+**Status:** Done (2026-07-12) · **Effort:** L → came in S once Phases 1–3 existed
+**Dependency:** Phases 1–3 for the mechanism; a real SPV/custodian for production
 
-Close the loop: token → actual asset.
+Close the loop: token → actual asset. Same shape as Phase 3 — the *mechanism*
+(burn the token on-chain) is real; the *decision* ("has the real title actually
+transferred?") is stubbed, because that decision belongs to a custodian who
+doesn't exist yet.
 
-### Scope
-- **SPV / trust / custodian** legally owns the property; token = beneficial claim.
-- **Redemption:** heir presents token → issuer **clawback** burns it → custodian
-  executes the real title transfer off-chain.
-- Custodian-operated redemption step, modeled on the SEP-6/SEP-24 anchor pattern
-  (analogous to the existing PDAX cash-out leg, but for titles + KYC-gated).
+### Scope (as built)
+- **Redemption:** heir presents a claimed title token → (simulated) custodian
+  review → issuer **clawback** (CAP-35, classic op) burns the heir's balance.
+- Custodian-operated redemption step, modeled on the SEP-6/SEP-24 anchor
+  pattern (analogous to the existing PDAX cash-out leg, but for titles).
+- Redemption state is read from the heir's **real on-chain balance**, not a
+  client-side flag — once clawback lands, the balance is genuinely `0`.
 
-### Exit criteria
-A claimed RWA token can be redeemed for a documented real-world title transfer,
-with the on-chain token clawed back / burned on completion.
+### Deliverables (as built)
+- `frontend/api/redeem.ts`, `frontend/api/_redeem.ts` — demo custodian
+  (server-side). Maps a SAC to its classic asset + issuer, calls
+  `Operation.clawback({ asset, from: heir, amount })` signed by the issuer,
+  submitted via Horizon. `deny: true` simulates a custodian hold.
+- `frontend/src/lib/redeem.ts` — client wrapper (`requestRedemption`).
+- `frontend/src/lib/token.ts` — `getBalance()`, used to read the heir's real
+  post-claim balance.
+- `frontend/src/pages/heir/Claim.tsx` — `RedeemGate`: once a title is claimed,
+  shows **Redeem for title** (or **Redeemed** once balance hits 0), plus a
+  *Simulate hold* path.
+- `.env.example` / `.env.local` — `RWA_ISSUER_SECRET` (HOUSE01) alongside the
+  existing `RWA_GATED_ISSUER_SECRET` (HOUSE02); both are the demo custodian's
+  keys, server-only.
+
+### 🚧 Demo vs real — what is simulated
+**The burn is real. The custodian decision is stubbed.**
+
+| Piece | Status |
+|-------|--------|
+| Classic `clawback` on the heir's balance | ✅ **real** — proven on testnet |
+| Redemption state read from live balance | ✅ real |
+| **"Has the real title transferred?"** | ❌ **SIMULATED — auto-approves** |
+| Off-chain paperwork / title registry update | ❌ not implemented |
+| Licensed SPV/custodian holding the property | ❌ not implemented |
+
+To productionize: an SPV/custodian legally holds the property and only
+authorizes `api/redeem` to fire once its own paperwork confirms the transfer.
+Everything downstream (the clawback, the burn, the UI) already works.
+
+**Testnet only. Not a real custodian. Not legally binding.**
+
+### Exit criteria — met
+Verified directly against `redeemTitle()` on testnet: minted a throwaway
+HOUSE01 balance to a scratch account, redeemed it — balance went
+`1.0000000 → 0.0000000` (tx confirmed on Horizon), and a second redemption
+attempt against the now-empty balance failed cleanly (`"heir holds no
+redeemable balance"`) instead of submitting a bad transaction.
 
 ### Skills / refs
-`standards` (SEP-6/24 patterns), `agentic-payments`/PDAX analogy, legal partner.
+`standards` (SEP-6/24 patterns), `assets` (clawback/CAP-35), `agentic-payments`
+/ PDAX analogy for the custodian leg, legal partner for production.
 
 ---
 
@@ -251,15 +293,20 @@ with the on-chain token clawed back / burned on completion.
 | 1 | Issued asset in vault | S–M | no | ✅ done (testnet) |
 | 2 | Attested valuation | M | no | ✅ done (testnet) |
 | 3 | KYC + approval gate | L | for prod | ✅ mechanism done; **approver simulated** |
-| 4 | Redemption / title | L | **yes (SPV)** | ❌ not started |
+| 4 | Redemption / title | L→S | **yes (SPV)**, for prod | ✅ mechanism done; **custodian simulated** |
 
-**Next: Phase 4** — and it is *not* an engineering problem. It needs an SPV /
-custodian who legally holds the property and will execute a real title transfer
-on redemption. Until that partner exists, Phase 4 cannot be honestly built; the
-clawback-on-redeem plumbing is a day's work once someone can act on it.
+**What's left is not an engineering problem.** All four phases now have their
+on-chain mechanism built and proven on testnet; what remains stubbed in every
+one of them is a licensed human decision:
 
-The other outstanding non-engineering item is swapping Phase 3's auto-approve
-for a real licensed KYC/compliance decision (see Demo shortcuts).
+- Phase 3's KYC auto-approve needs a real SEP-12 KYC + compliance-officer
+  decision.
+- Phase 4's custodian auto-approve needs a real SPV/custodian who legally
+  holds the property and only fires the clawback once its own paperwork
+  confirms the title actually transferred.
+
+Until those partners exist, the app is an honest, fully-functional demo of the
+inheritance + redemption *mechanism* — not a production RWA platform.
 
 ## Deliberately out of scope (why the mock stays honest)
 - Legal enforceability of a token = property claim (jurisdiction-specific).
