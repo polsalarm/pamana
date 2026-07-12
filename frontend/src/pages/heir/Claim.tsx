@@ -22,6 +22,7 @@ import {
   readTokenMeta,
   hasTrustline,
   addTrustline,
+  getBalance,
   type SacAsset,
 } from '../../lib/token'
 import {
@@ -32,6 +33,7 @@ import {
   notifyOnce,
 } from '../../lib/push'
 import { requestKyc } from '../../lib/kyc'
+import { requestRedemption } from '../../lib/redeem'
 
 const isStellarAddr = (a: string) => /^G[A-Z2-7]{55}$/.test(a.trim())
 
@@ -427,6 +429,12 @@ export function Claim() {
                           </div>
                         </div>
                       )}
+
+                      {/* Redemption (Phase 4) — real clawback burn once the
+                          (simulated) custodian confirms the title transfer. */}
+                      {t.claimed && tokenBySac(t.sac).rwa && (
+                        <RedeemGate sac={t.sac} symbol={t.symbol} asset={t.asset} address={address ?? ''} />
+                      )}
                     </div>
                   )
                 })}
@@ -444,5 +452,89 @@ export function Claim() {
         {error && <p className="text-error text-sm break-words">{error}</p>}
       </div>
     </Layout>
+  )
+}
+
+/** Post-claim redemption gate (Phase 4). Reads the heir's real on-chain
+ *  balance rather than session state — once the (simulated) custodian's
+ *  clawback lands, the balance genuinely drops to 0, so "Redeemed" reflects
+ *  what's actually on-chain, not a flag we made up client-side. */
+function RedeemGate({
+  sac,
+  symbol,
+  asset,
+  address,
+}: {
+  sac: string
+  symbol: string
+  asset: SacAsset
+  address: string
+}) {
+  const { toast } = useFeedback()
+  const [balance, setBalance] = useState<number | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  const refresh = useCallback(() => {
+    if (!address) return
+    getBalance(address, asset).then(setBalance).catch(() => setBalance(null))
+  }, [address, asset])
+
+  useEffect(() => {
+    refresh()
+  }, [refresh])
+
+  async function onRedeem(deny = false) {
+    setBusy(true)
+    try {
+      const res = await requestRedemption(address, sac, deny)
+      if (res.approved) {
+        toast(`Redemption approved — ${symbol} clawed back for the title transfer`, 'success')
+        refresh()
+      } else {
+        toast(res.reason ?? res.error ?? 'Redemption declined', 'error')
+      }
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Redemption failed', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (balance === null) return null // still loading
+
+  if (balance <= 0) {
+    return (
+      <div className="text-left text-xs text-on-surface-variant border-t border-outline-variant/30 pt-2 flex items-center gap-1.5">
+        <Icon name="check_circle" className="text-sm" />
+        Redeemed — token clawed back; title transfer handled by the custodian
+        (demo: simulated).
+      </div>
+    )
+  }
+
+  return (
+    <div className="text-left text-xs text-on-surface-variant border-t border-outline-variant/30 pt-2">
+      <div className="flex items-center justify-between gap-2">
+        <span>Ready to redeem for the real title.</span>
+        <button
+          onClick={() => onRedeem()}
+          disabled={busy}
+          className="h-8 px-3 rounded-lg border border-primary-container/50 text-primary-container font-semibold text-xs disabled:opacity-60 shrink-0"
+        >
+          {busy ? 'Redeeming…' : 'Redeem for title'}
+        </button>
+      </div>
+      <div className="mt-1.5 italic">
+        Demo: custodian review is simulated — a licensed custodian/SPV plugs in
+        here and only claws back once the real transfer is confirmed.{' '}
+        <button
+          onClick={() => onRedeem(true)}
+          disabled={busy}
+          className="underline disabled:opacity-60 not-italic"
+        >
+          Simulate hold
+        </button>
+      </div>
+    </div>
   )
 }

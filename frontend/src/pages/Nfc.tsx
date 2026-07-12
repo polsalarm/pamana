@@ -99,7 +99,7 @@ export function Nfc() {
               cardClassName="w-full aspect-[1.586/1] bg-[#0f172a] text-white overflow-hidden"
               className="w-full"
               radius="20px"
-              behindGlowColor="rgba(30, 91, 255, 0.4)"
+              behindGlowColor="rgba(37, 99, 235, 0.4)"
               behindGlowSize="60%"
             >
               <div className="relative h-full">

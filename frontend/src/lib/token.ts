@@ -44,6 +44,25 @@ export async function hasTrustline(
   )
 }
 
+/** Current balance of `asset` in `account` (0 if untrusted/clawed back). Used
+ *  to detect a completed redemption without any client-side state — once the
+ *  issuer claws the token back, this genuinely reads 0. */
+export async function getBalance(account: string, asset: SacAsset): Promise<number> {
+  const res = await fetch(`${CONFIG.horizonUrl}/accounts/${account}`)
+  if (!res.ok) return 0
+  const j = await res.json()
+  const balances: Array<{
+    asset_type: string
+    asset_code?: string
+    asset_issuer?: string
+    balance: string
+  }> = j.balances ?? []
+  const match = asset.native
+    ? balances.find((b) => b.asset_type === 'native')
+    : balances.find((b) => b.asset_code === asset.code && b.asset_issuer === asset.issuer)
+  return match ? Number(match.balance) : 0
+}
+
 /** Add a trustline for a classic asset so the account can receive it. */
 export async function addTrustline(account: string, asset: SacAsset) {
   if (asset.native) return
