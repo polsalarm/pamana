@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import { connectWallet, kit } from '../lib/wallet'
+import { DEMO_OWNER, demoCaptureEnabled } from '../lib/devDemo'
 
 interface WalletState {
   address: string | null
@@ -29,6 +30,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   // The kit persists the selected wallet in its own state module; try to
   // restore the address on load so a refresh keeps the user connected.
   useEffect(() => {
+    if (demoCaptureEnabled()) {
+      setAddress(DEMO_OWNER)
+      setRestoring(false)
+      return
+    }
+
     kit
       .getAddress()
       .then(({ address }) => address && setAddress(address))
@@ -39,6 +46,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const connect = useCallback(async () => {
+    if (demoCaptureEnabled()) {
+      setAddress(DEMO_OWNER)
+      return
+    }
+
     setConnecting(true)
     try {
       setAddress(await connectWallet())
@@ -48,6 +60,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const disconnect = useCallback(() => {
+    if (demoCaptureEnabled()) return
     kit.disconnect().catch(() => {})
     setAddress(null)
   }, [])

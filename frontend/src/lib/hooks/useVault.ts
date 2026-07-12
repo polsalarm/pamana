@@ -10,6 +10,7 @@ import {
   type VaultStatus,
   type Heir,
 } from '../contract'
+import { demoCaptureEnabled, demoVaultData } from '../devDemo'
 
 export interface TokenBalance {
   sac: string
@@ -36,11 +37,19 @@ const EMPTY: VaultData = {
 
 /** Loads an owner's vault + its live on-chain state (multi-token). */
 export function useVault(address: string | null) {
-  const [data, setData] = useState<VaultData>(EMPTY)
-  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<VaultData>(() =>
+    demoCaptureEnabled() ? demoVaultData : EMPTY,
+  )
+  const [loading, setLoading] = useState(() => !demoCaptureEnabled())
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
+    if (demoCaptureEnabled()) {
+      setData(demoVaultData)
+      setLoading(false)
+      setError(null)
+      return
+    }
     if (!address) return
     setLoading(true)
     setError(null)

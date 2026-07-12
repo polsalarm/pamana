@@ -17,6 +17,7 @@ import {
   type VaultStatus,
 } from '../../lib/contract'
 import { tokenBySac } from '../../lib/config'
+import { DEMO_OWNER, demoCaptureEnabled, demoClaimData } from '../../lib/devDemo'
 import {
   readTokenMeta,
   hasTrustline,
@@ -55,9 +56,11 @@ export function Claim() {
   const { runTx, toast } = useFeedback()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [owner, setOwner] = useState('')
+  const [owner, setOwner] = useState(() => (demoCaptureEnabled() ? DEMO_OWNER : ''))
   const [loading, setLoading] = useState(false)
-  const [found, setFound] = useState<Found | null>(null)
+  const [found, setFound] = useState<Found | null>(() =>
+    demoCaptureEnabled() ? demoClaimData : null,
+  )
   const [error, setError] = useState<string | null>(null)
   const [claimingSac, setClaimingSac] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
@@ -84,6 +87,11 @@ export function Claim() {
 
   const lookup = useCallback(
     async (ownerArg?: string) => {
+      if (demoCaptureEnabled()) {
+        setFound(demoClaimData)
+        setError(null)
+        return
+      }
       const o = (ownerArg ?? owner).trim()
       if (!address || !isStellarAddr(o)) return
       setLoading(true)

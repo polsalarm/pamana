@@ -6,6 +6,7 @@ import { useWallet } from '../../contexts/WalletContext'
 import { useFeedback } from '../../contexts/FeedbackContext'
 import { useVault } from '../../lib/hooks/useVault'
 import { setHeirs } from '../../lib/contract'
+import { demoCaptureEnabled, demoHeirs } from '../../lib/devDemo'
 
 interface Row {
   addr: string
@@ -20,10 +21,15 @@ export function ManageHeirs() {
   const { runTx } = useFeedback()
   const navigate = useNavigate()
 
-  const [rows, setRows] = useState<Row[]>([{ addr: '', pct: '' }])
+  const [rows, setRows] = useState<Row[]>(() =>
+    demoCaptureEnabled()
+      ? demoHeirs.map((h) => ({ addr: h.addr, pct: String(h.bps / 100) }))
+      : [{ addr: '', pct: '' }],
+  )
 
   // Seed from existing heirs once loaded.
   useEffect(() => {
+    if (demoCaptureEnabled()) return
     if (vault.heirs.length > 0) {
       setRows(vault.heirs.map((h) => ({ addr: h.addr, pct: String(h.bps / 100) })))
     }
