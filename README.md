@@ -86,8 +86,8 @@ Every user is the **owner of their own vault**. The factory is a shared "vault p
 
 ### 1. Clone
 ```bash
-git clone https://github.com/polsalarm/pamana
-cd pamana
+git clone https://github.com/polsalarm/bequest
+cd bequest
 ```
 
 ### 2. Build / test contracts
@@ -153,7 +153,7 @@ The inheritance core is genuinely trustless and fully on-chain. Several things a
 **Rate source.** Quotes come from PDAX's live `v2/trade/price` when available, fall back to a public spot feed, and only then to a hardcoded constant. The receipt's `provider` field always says which of the three answered, so a public rate is never presented as a venue rate.
 
 ## 🔭 Roadmap
-Honest about what's vision vs shipped. Today Pamana holds **any Stellar asset** (XLM, USDC, any SAC / SEP-41 token). Beyond that:
+Honest about what's vision vs shipped. Today Bequest holds **any Stellar asset** (XLM, USDC, any SAC / SEP-41 token). Beyond that:
 
 - **Cross-chain assets** — let a vault hold and inherit assets from **other chains** (Ethereum/ERC-20, BTC, etc.), not just Stellar-native tokens. Requires a bridge / wrapped-asset layer (e.g. Allbridge, or a custody+attestation model) to represent foreign assets on Stellar. Biggest reach; kept out of the trustless core until a bridge can preserve the "no custodian" thesis.
 - **Passkey smart accounts** — heirs claim with fingerprint/face, no wallet app or seed phrase (Stellar passkey-kit + a transaction submitter).
