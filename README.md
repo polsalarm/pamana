@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🪙 Pamana
+# 🪙 Bequest
 
 > Trustless on-chain inheritance for Filipino families. When you go silent, your family inherits — no company, no lawyer, no court.
 
