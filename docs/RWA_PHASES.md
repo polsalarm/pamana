@@ -1,4 +1,4 @@
-# Pamana — RWA Phase Plan
+# Bequest — RWA Phase Plan
 
 Forward plan for turning the **Real-World Asset** card from a roadmap mock into
 a working inheritance path. Companion to [`BUILD_PLAN.md`](BUILD_PLAN.md); as-built
@@ -12,9 +12,11 @@ results get logged in [`PHASE_LOG.md`](PHASE_LOG.md) as each phase lands.
 
 ## Where we are
 
-- **Today:** `RwaCard` (`frontend/src/components/RoadmapCards.tsx`) is a static
-  card — `₱2,400,000 · tokenized title`, labelled *"Needs a legal + oracle
-  layer — kept honest as roadmap."* No contract, no token, no claim path.
+- **Today:** Phases 1–4 are implemented on testnet. HOUSE01/02/03 are issued
+  title assets that use the existing vault claim path; the valuation oracle,
+  `AUTH_REQUIRED` compliance gate, and redemption clawback are live mechanisms.
+  Licensed appraisal, real KYC/compliance decisions, legal custody, and title
+  paperwork remain outside the demo and are not legally binding.
 
 ## What the vault already gives us for free
 
@@ -67,7 +69,7 @@ stubbed. Testnet. Not legally binding. Not a real KYC provider.
 ---
 
 ## Phase 0 — Roadmap mock ✅
-**Status:** Done (current) · **Effort:** —
+**Status:** Done, superseded by Phases 1–4 · **Effort:** —
 
 Static `RwaCard` displaying the vision. Honest placeholder. No on-chain anything.
 
@@ -308,10 +310,11 @@ one of them is a licensed human decision:
 Until those partners exist, the app is an honest, fully-functional demo of the
 inheritance + redemption *mechanism* — not a production RWA platform.
 
-## Deliberately out of scope (why the mock stays honest)
+## Deliberately out of scope (production boundary)
 - Legal enforceability of a token = property claim (jurisdiction-specific).
 - Custodial/SPV structuring and licensing.
 - Oracle trust beyond attested appraiser signatures.
 
-These are ops/legal, not Soroban problems — which is exactly why Phase 0 keeps
-the card labelled as roadmap.
+These are ops/legal, not Soroban problems. The UI labels the working mechanism
+as **Live on testnet** while keeping these production dependencies on the
+roadmap.

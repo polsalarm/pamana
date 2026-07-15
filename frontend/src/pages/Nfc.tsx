@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Layout } from '../components/Layout'
 import { Icon } from '../components/Icon'
 import { TiltCard } from '../components/TiltCard'
-import { RwaCard, RoadmapBadge } from '../components/RoadmapCards'
+import { RwaCard, TestnetBadge } from '../components/RoadmapCards'
 import { useWallet } from '../contexts/WalletContext'
 import { useFeedback } from '../contexts/FeedbackContext'
 import { useTheme } from '../contexts/ThemeContext'
@@ -183,11 +183,11 @@ export function Nfc() {
           </div>
         )}
 
-        {/* RWA vision */}
+        {/* Working testnet RWA mechanism; legal/custody layer remains roadmap. */}
         <section className="flex flex-col gap-3">
           <div className="flex items-center gap-2 px-1">
-            <h3 className="text-lg font-semibold">Also on the roadmap</h3>
-            <RoadmapBadge />
+            <h3 className="text-lg font-semibold">RWA inheritance</h3>
+            <TestnetBadge />
           </div>
           <RwaCard />
         </section>

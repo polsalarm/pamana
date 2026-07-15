@@ -43,13 +43,15 @@ Make inheritance a property of the asset itself. A Soroban proof-of-life vault e
 ## ✨ Features
 - **Trustless Inheritance (Heartbeat)** — Soroban vault holds any Stellar asset (XLM, USDC, any SAC / SEP-41); owner calls `check_in()` to prove life; if silent past timeout (default 90 days) any heir may `claim()`. No company, no key-share held by anyone
 - **Multi-Heir BPS Splits** — heirs designated in basis points (sum = 10,000); pull-based, independent claims; `TotalLocked` snapshot on first claim so no heir is shortchanged
-- **Social Recovery** *(partial)* — native Stellar multisig guardians added/removed via `setOptions`. Thresholds are **not** yet set, so this is designation, not N-of-M enforcement — see [What is *not* real yet](#️-what-is-not-real-yet)
+- **Social Recovery (native multisig)** — add/remove guardians and enforce safe N-of-M Stellar thresholds on-chain. The owner keeps enough master-key weight to check in alone; the guardian recovery-signing experience is still roadmap — see [What is *not* real yet](#️-what-is-not-real-yet)
 - **NFC Heir Claim Card** — Android Chrome tap opens a prefilled claim deep-link stored on the tag. The card is a pointer: it holds no key and signs nothing
 - **Time-Locked Release (Trust Fund)** — scheduled tranches (e.g. 25%/year over 4 years) enforced on-chain; each tranche claims independently
 - **PDAX Off-Ramp** — BSP-licensed exchange. Live `v2/trade/price` quotes, a real on-chain XLM deposit into PDAX's Stellar custody address, then `/trade` + `/fiat/withdraw` to GCash/Maya/bank. **On-ramp (cash-in) is not implemented**, and PDAX's sandbox does not credit testnet deposits — see [What is *not* real yet](#️-what-is-not-real-yet)
 - **Claimant Home** — a **My Assets** view reads your wallet's live balances straight from Horizon, so an heir sees exactly what they received after claiming, plus **Cash out / Cash in / Claim** actions and a live **Activity** feed of recent on-chain history. The bottom nav puts the **Vault** front-and-centre as a distinct raised tab.
 - **Transaction feedback** — every on-chain / money action shows a **confirm → live pending → success/error** modal, and confirmed transactions link straight to Stellar Expert so you always know a claim actually settled.
-- **RWA Asset Card** *(roadmap stub)* — mock on-chain real-world asset display
+- **RWA Title Inheritance (testnet demo)** — HOUSE01/02/03 title assets inherit through the same vault; a Soroban oracle stores signed valuation attestations, `AUTH_REQUIRED` gates regulated transfers, and issuer clawback completes token redemption. The on-chain mechanisms are real on testnet; KYC, appraisal authority, custody, and legal title transfer are simulated or not legally binding.
+- **Proof-of-Life Reminders** — opt-in Web Push reminders for upcoming check-ins (demo-scoped in-memory subscriptions)
+- **Settings & Sharing** — light/dark theme, connected-wallet details, claim-link sharing, and session logout
 - **Sentinel Monitor** *(roadmap stub)* — 24/7 anomaly-detection status light
 
 ## 🔄 How it works (Freighter flow)
@@ -67,8 +69,8 @@ Every user is the **owner of their own vault**. The factory is a shared "vault p
 
 ## 🛠️ Tech Stack
 - **Frontend:** React 19 + Vite + TypeScript + Tailwind CSS
-- **Blockchain:** Stellar (Soroban smart contracts in Rust `soroban-sdk`, Stellar RPC, SEP-30) — **factory + vault** contracts
-- **Asset:** USDC via Stellar Asset Contract (SAC)
+- **Blockchain:** Stellar (Soroban smart contracts in Rust `soroban-sdk`, Stellar RPC) — **factory + vault + valuation oracle** contracts
+- **Assets:** XLM, USDC, any SAC / SEP-41 token, plus testnet RWA title assets
 - **Auth / signing:** Stellar Wallets Kit — Freighter (desktop) · LOBSTR / WalletConnect (Android). Passkey smart accounts are roadmap
 - **NFC:** plain NTAG21x tag + Web NFC API (Android Chrome only)
 - **Off-ramp:** PDAX Institutional API (crypto → PHP). Cash-in not implemented
@@ -131,6 +133,7 @@ Live on Stellar Testnet (multi-token). See [contract-deployment.md](docs/contrac
 |----------|---------|----------|
 | PamanaFactory | `CANQJ6N5BNPYY5CZWGRY7QTZKAY7IAIMSI7RPRNJZP564DROBWOG5PQM` | [Stellar Expert →](https://stellar.expert/explorer/testnet/contract/CANQJ6N5BNPYY5CZWGRY7QTZKAY7IAIMSI7RPRNJZP564DROBWOG5PQM) |
 | PamanaVault (per family) | `CDJOXNIY6FMVUBDCDYV3VXWDXVZ323WURQ3VOLSNGH6BTHBMXP7X5LJG` | [Stellar Expert →](https://stellar.expert/explorer/testnet/contract/CDJOXNIY6FMVUBDCDYV3VXWDXVZ323WURQ3VOLSNGH6BTHBMXP7X5LJG) |
+| PamanaOracle | `CDBZ4RNSN5235LB2ZOF3UZ3VRHOD2VHFGDTELZI45V4S4IIIOECNLKJS` | [Stellar Expert →](https://stellar.expert/explorer/testnet/contract/CDBZ4RNSN5235LB2ZOF3UZ3VRHOD2VHFGDTELZI45V4S4IIIOECNLKJS) |
 
 Network: Stellar Testnet (`Test SDF Network ; September 2015`). Resets ~quarterly — redeploy + update `.env.local` after each reset.
 
@@ -142,13 +145,13 @@ The inheritance core is genuinely trustless and fully on-chain. Several things a
 
 **Cash-in (PHP → crypto) is not implemented.** The button is labelled *Soon*. `POST /fiat/deposit` exists and is documented in [`docs/PDAX_API.md`](docs/PDAX_API.md), but it requires a full BSP travel-rule payload (both parties' legal names, DOB, national ID, addresses) that this app deliberately does not collect.
 
-**Social recovery is guardian designation only — not N-of-M.** Guardians are added as native Stellar signers via `setOptions`, which works. But `setThresholds` is never called, so account thresholds stay at `0/0/0`. **A guardian added today can unilaterally sign any transaction on the owner's account, including locking the owner out.** Wiring thresholds is a small change and is the top correctness item on the list. SEP-30 recoverysigner is not integrated.
+**Social recovery enforces N-of-M thresholds, but recovery coordination is not integrated.** The app can add/remove guardians and safely raise Stellar account thresholds so no single guardian can act alone. It does not yet collect and assemble guardian signatures for a key-rotation recovery transaction; guardians need external Stellar multisig tooling. SEP-30 recoverysigner is not integrated.
 
 **Passkey / smart-account heir login is deferred.** Heirs use a normal Stellar wallet (WalletConnect on mobile). No seed-phrase-free path ships today.
 
 **The NFC card is a pointer, not a signer.** It stores a claim deep-link on a plain NTAG21x tag. It holds no key and signs nothing; secure-element signing (NTAG 424 DNA) is future work. Android Chrome only — Web NFC does not exist on iOS.
 
-**RWA asset card and Sentinel monitor are static stubs**, labelled *Roadmap* in the UI. They display mock data and are wired to nothing.
+**RWA is a testnet mechanism demo, not a production property platform.** HOUSE title assets, vault inheritance, oracle attestations, `AUTH_REQUIRED` transfer gates, and redemption clawback are on-chain and working on testnet. The appraiser/value are demo identities and figures; KYC and custodian decisions auto-approve; no licensed SPV, legal title transfer, real paperwork, or production identity screening exists. See [`docs/RWA_PHASES.md`](docs/RWA_PHASES.md) for the exact real-vs-simulated boundary. **Sentinel remains a static roadmap stub.**
 
 **Rate source.** Quotes come from PDAX's live `v2/trade/price` when available, fall back to a public spot feed, and only then to a hardcoded constant. The receipt's `provider` field always says which of the three answered, so a public rate is never presented as a venue rate.
 
@@ -158,7 +161,8 @@ Honest about what's vision vs shipped. Today Bequest holds **any Stellar asset**
 - **Cross-chain assets** — let a vault hold and inherit assets from **other chains** (Ethereum/ERC-20, BTC, etc.), not just Stellar-native tokens. Requires a bridge / wrapped-asset layer (e.g. Allbridge, or a custody+attestation model) to represent foreign assets on Stellar. Biggest reach; kept out of the trustless core until a bridge can preserve the "no custodian" thesis.
 - **Passkey smart accounts** — heirs claim with fingerprint/face, no wallet app or seed phrase (Stellar passkey-kit + a transaction submitter).
 - **PDAX PHP on-ramp** — fund a vault with pesos (PHP→USDC), the mirror of the live off-ramp.
-- **RWA asset card** — represent a real-world asset (property, etc.) in the vault. Needs a legal entity + oracle/attestation, so it stays roadmap to avoid reintroducing a custodian.
+- **Production RWA legal + custody layer** — replace demo appraisers and auto-approval with licensed appraisal, SEP-12 identity checks, compliance review, an SPV/custodian, and legally binding title-transfer workflows. The Stellar issuance, oracle, inheritance gate, and redemption mechanics already run on testnet.
+- **Integrated guardian recovery** — collect N-of-M guardian signatures and rotate a lost owner key in-app, or integrate SEP-30 recovery services. Threshold enforcement already ships.
 - **Sentinel monitor** — 24/7 anomaly-detection status light.
 - **NFC secure-element signing** — full NTAG 424 DNA cryptographic card (current NFC is a tap-to-claim touchpoint).
 

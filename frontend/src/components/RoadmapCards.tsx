@@ -9,6 +9,15 @@ export function RoadmapBadge() {
   )
 }
 
+/** Testnet label for working mechanisms that are not production/legal claims. */
+export function TestnetBadge() {
+  return (
+    <span className="text-[10px] uppercase tracking-wider bg-primary-container/10 text-primary-container px-2 py-0.5 rounded-full">
+      Live on testnet
+    </span>
+  )
+}
+
 /** Sentinel monitor — static "Protected" status light (roadmap). */
 export function SentinelCard() {
   return (
@@ -30,7 +39,7 @@ export function SentinelCard() {
   )
 }
 
-/** RWA asset card — mock real-world asset (roadmap). */
+/** RWA asset card — working testnet mechanism; legal/custody layer is roadmap. */
 export function RwaCard() {
   return (
     <div className="rounded-2xl p-5 card-shadow overflow-hidden relative bg-primary-container text-on-primary">
@@ -56,17 +65,25 @@ export function RwaCard() {
   )
 }
 
-/** Roadmap stubs shown as vision (doc §4.7). Clearly labeled "Roadmap" so the
- *  demo is honest: these are the pitch's future, not shipped features. */
+/** Keep the working RWA demo separate from the genuinely unbuilt roadmap. */
 export function RoadmapCards() {
   return (
-    <section className="flex flex-col gap-3">
-      <div className="flex items-center gap-2 px-1">
-        <h3 className="text-lg font-semibold">Coming soon</h3>
-        <RoadmapBadge />
-      </div>
-      <SentinelCard />
-      <RwaCard />
-    </section>
+    <div className="flex flex-col gap-5">
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center gap-2 px-1">
+          <h3 className="text-lg font-semibold">Real-world assets</h3>
+          <TestnetBadge />
+        </div>
+        <RwaCard />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center gap-2 px-1">
+          <h3 className="text-lg font-semibold">Coming soon</h3>
+          <RoadmapBadge />
+        </div>
+        <SentinelCard />
+      </section>
+    </div>
   )
 }
